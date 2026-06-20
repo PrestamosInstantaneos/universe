@@ -28,12 +28,6 @@ export function HeroSection() {
         {/* Contenedor del contenido alineado con la cabecera de la página */}
         <div className="relative z-10 mx-auto max-w-[1400px] px-4 md:px-8 flex items-center min-h-[380px] sm:min-h-[420px] lg:min-h-[480px]">
           <div className="w-full max-w-2xl py-12 lg:py-16">
-            {/* Top labels */}
-            <div className="flex items-center gap-4 font-mono text-[10px] tracking-[0.2em] text-foreground/75 mb-6">
-              <span>[ RELEASE No. 01 ]</span>
-              <span>[ FRZN SOUND COLLECTIVE ]</span>
-            </div>
-
             {/* Headline */}
             <div className="space-y-6">
               <h1 className="font-heading text-4xl font-black leading-[0.95] tracking-[-0.02em] text-foreground sm:text-5xl md:text-6xl lg:text-7xl uppercase">
