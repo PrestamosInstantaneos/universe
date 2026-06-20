@@ -4,29 +4,29 @@ const FORMATS = ["DIGITAL", "CD", "VINYL", "CASSETTE"]
 
 export function HeroSection() {
   return (
-    <section className="mx-auto max-w-[1400px] px-4 pb-6 md:px-8">
-      <div className="relative overflow-hidden border border-border bg-black">
-        <div className="relative min-h-[500px] sm:min-h-[550px] lg:min-h-[620px] flex items-center">
-          {/* Video en la derecha con degradado negro de izquierda a derecha */}
-          <div className="absolute inset-0 z-0">
-            <video
-              src="/animationsintro.mp4"
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="absolute inset-y-0 right-0 h-full w-full lg:w-[60%] object-cover object-center opacity-95"
-            />
-            {/* Capas de degradado para fusionar el video con el fondo negro */}
-            {/* En móviles: Degradado vertical para asegurar legibilidad del texto */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/20 lg:hidden" />
-            
-            {/* En pantallas grandes: Degradado horizontal de izquierda a derecha (estilo Beatstars) */}
-            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/85 via-45% to-transparent hidden lg:block" />
-          </div>
+    <section className="w-full pb-6">
+      <div className="relative overflow-hidden border-y border-border bg-black">
+        {/* Video en la derecha con degradado negro de izquierda a derecha */}
+        <div className="absolute inset-0 z-0">
+          <video
+            src="/animationsintro.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-y-0 right-0 h-full w-full lg:w-[60%] object-cover object-center opacity-95"
+          />
+          {/* Capas de degradado para fusionar el video con el fondo negro */}
+          {/* En móviles: Degradado vertical para asegurar legibilidad del texto */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/20 lg:hidden" />
+          
+          {/* En pantallas grandes: Degradado horizontal de izquierda a derecha (estilo Beatstars) */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/85 via-45% to-transparent hidden lg:block" />
+        </div>
 
-          {/* Contenido principal en el lado izquierdo */}
-          <div className="relative z-10 w-full max-w-2xl px-6 py-12 md:px-12 lg:py-16">
+        {/* Contenedor del contenido alineado con la cabecera de la página */}
+        <div className="relative z-10 mx-auto max-w-[1400px] px-4 md:px-8 flex items-center min-h-[500px] sm:min-h-[550px] lg:min-h-[620px]">
+          <div className="w-full max-w-2xl py-12 lg:py-16">
             {/* Top labels */}
             <div className="flex items-center gap-4 font-mono text-[10px] tracking-[0.2em] text-foreground/75 mb-6">
               <span>[ RELEASE No. 01 ]</span>
