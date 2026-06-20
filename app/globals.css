@@ -172,3 +172,17 @@
   scrollbar-width: none !important;  /* Firefox */
 }
 
+/* Responsive transforms for the background video */
+.hero-video {
+  /* Mobile (teléfono): Centrado de las manos */
+  transform: scale(1.65) translate(4%, 6%);
+  transform-origin: center center;
+}
+
+@media (min-width: 1024px) {
+  /* Desktop (pantallas grandes): Desplazado para encuadre Beatstars */
+  .hero-video {
+    transform: scale(1.4) translate(10%, 8%);
+    transform-origin: center right;
+  }
+}
