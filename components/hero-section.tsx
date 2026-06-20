@@ -30,18 +30,16 @@ export function HeroSection() {
           <div className="w-full max-w-2xl py-12 lg:py-16">
             {/* Headline */}
             <div className="space-y-6">
-              <h1 className="font-heading text-2xl min-[380px]:text-3xl font-black leading-[1.08] tracking-[-0.02em] text-foreground sm:text-5xl md:text-6xl lg:text-7xl uppercase">
-                Tu próximo hit
-                <br />
-                comienza aquí
+              <h1 className="font-heading text-3xl min-[380px]:text-4xl font-black leading-[1.08] tracking-[-0.02em] text-foreground sm:text-5xl md:text-6xl lg:text-7xl uppercase">
+                Encuentra tu hit
               </h1>
               
-              <p className="font-mono text-xs tracking-wide text-foreground/60 max-w-md leading-relaxed">
+              <p className="hidden sm:block font-mono text-xs tracking-wide text-foreground/60 max-w-md leading-relaxed">
                 Encuentra beats exclusivos, instrumentales listos para grabar y colabora con productores del colectivo FRZN.
               </p>
 
               {/* Barra de búsqueda interactiva estilo Beatstars */}
-              <div className="relative mt-6 max-w-xl">
+              <div className="relative mt-6 max-w-sm">
                 <div className="relative flex items-center bg-card/60 border border-border/80 hover:border-primary/50 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 rounded-full overflow-hidden transition-all shadow-xl backdrop-blur-md p-1.5">
                   <Search className="absolute left-3.5 sm:left-4.5 size-3.5 sm:size-4 text-foreground/45" />
                   <input
@@ -53,20 +51,6 @@ export function HeroSection() {
                     BUSCAR
                   </button>
                 </div>
-              </div>
-
-              {/* Tags populares */}
-              <div className="flex flex-wrap items-center gap-3 pt-2 font-mono text-[10px] tracking-wider text-foreground/50">
-                <span className="uppercase">Populares:</span>
-                {["#TRAP", "#DRILL", "#AFROBEATS", "#R&B"].map((tag) => (
-                  <a
-                    key={tag}
-                    href="#"
-                    className="text-foreground/75 hover:text-primary transition-colors border border-border bg-card/20 px-2.5 py-1 rounded"
-                  >
-                    {tag}
-                  </a>
-                ))}
               </div>
             </div>
           </div>
