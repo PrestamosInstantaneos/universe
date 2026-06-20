@@ -28,7 +28,7 @@ export function HeroSection() {
         <div className="relative z-10 mx-auto max-w-[1400px] px-6 md:px-8 flex items-center min-h-[380px] sm:min-h-[420px] lg:min-h-[480px]">
           <div className="w-full max-w-2xl py-12 lg:py-16">
             {/* Headline */}
-            <div className="space-y-6 flex flex-col items-center lg:items-start text-center lg:text-left">
+            <div className="flex flex-col gap-3 sm:gap-6 items-center lg:items-start text-center lg:text-left pt-8 sm:pt-0">
               <h1 className="w-full text-center lg:text-left font-heading text-lg min-[380px]:text-xl font-black leading-[1.08] tracking-[-0.02em] text-white/50 sm:text-5xl md:text-6xl lg:text-7xl uppercase">
                 Encuentra tu hit
               </h1>
@@ -38,7 +38,7 @@ export function HeroSection() {
               </p>
 
               {/* Barra de búsqueda interactiva estilo Beatstars */}
-              <div className="relative mt-6 w-full max-w-sm mx-auto lg:mx-0">
+              <div className="relative w-full max-w-sm mx-auto lg:mx-0">
                 <div className="relative flex items-center bg-card/60 border border-border/80 hover:border-primary/50 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 rounded-full overflow-hidden transition-all shadow-xl backdrop-blur-md p-1.5">
                   <Search className="absolute left-3.5 sm:left-4.5 size-3.5 sm:size-4 text-foreground/45" />
                   <input
