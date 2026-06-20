@@ -15,7 +15,7 @@ export function HeroSection() {
             muted
             playsInline
             className="absolute inset-y-0 right-0 h-full w-full lg:w-[60%] object-cover object-[30%_center] opacity-95"
-            style={{ transform: "scale(1.35) translate(8%, 5%)", transformOrigin: "center right" }}
+            style={{ transform: "scale(1.4) translate(10%, 8%)", transformOrigin: "center right" }}
           />
           {/* Capas de degradado para fusionar el video con el fondo negro */}
           {/* En móviles: Degradado vertical para asegurar legibilidad del texto */}
@@ -26,7 +26,7 @@ export function HeroSection() {
         </div>
 
         {/* Contenedor del contenido alineado con la cabecera de la página */}
-        <div className="relative z-10 mx-auto max-w-[1400px] px-4 md:px-8 flex items-center min-h-[420px] sm:min-h-[460px] lg:min-h-[520px]">
+        <div className="relative z-10 mx-auto max-w-[1400px] px-4 md:px-8 flex items-center min-h-[380px] sm:min-h-[420px] lg:min-h-[480px]">
           <div className="w-full max-w-2xl py-12 lg:py-16">
             {/* Top labels */}
             <div className="flex items-center gap-4 font-mono text-[10px] tracking-[0.2em] text-foreground/75 mb-6">
