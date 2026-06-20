@@ -119,53 +119,6 @@ const TRACKS: Track[] = [
 
 const TRIPLED_TRACKS = [...TRACKS, ...TRACKS, ...TRACKS]
 
-const LICENSES = [
-  {
-    name: "LICENCIA BÁSICA",
-    price: "$29.99",
-    type: "MP3 SOLAMENTE",
-    features: [
-      "Distribución hasta 2,000 copias",
-      "500,000 reproducciones de audio",
-      "Uso no exclusivo",
-      "Ideal para artistas independientes comenzando"
-    ]
-  },
-  {
-    name: "LICENCIA PREMIUM",
-    price: "$49.99",
-    type: "WAV + MP3",
-    features: [
-      "Distribución hasta 10,000 copias",
-      "1,000,000 reproducciones de audio",
-      "Uso no exclusivo",
-      "Archivos de alta calidad para masterizar"
-    ],
-    featured: true
-  },
-  {
-    name: "LICENCIA ILIMITADA",
-    price: "$99.99",
-    type: "STEMS + WAV + MP3",
-    features: [
-      "Distribución ilimitada",
-      "Reproducciones ilimitadas",
-      "Uso no exclusivo",
-      "Pistas por separado (Stems) para mezcla profesional"
-    ]
-  },
-  {
-    name: "ADQUISICIÓN EXCLUSIVA",
-    price: "CONTACTAR",
-    type: "PROPIEDAD TOTAL",
-    features: [
-      "Propiedad total de la producción",
-      "Retirado del catálogo (nadie más lo compra)",
-      "Derechos ilimitados de monetización y radio",
-      "Acuerdo legal firmado por el productor"
-    ]
-  }
-]
 
 export function NewCollection() {
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null)
@@ -381,19 +334,11 @@ export function NewCollection() {
       
       {/* SECCIÓN DE BEATS (RULETA DE PASOS) */}
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-white/10 pb-4">
-          <div>
-            <span className="font-mono text-[10px] tracking-[0.25em] text-primary uppercase">[ 01 ]</span>
-            <h2 className="font-heading text-2xl font-black tracking-[-0.02em] text-foreground sm:text-3xl md:text-4xl mt-1 uppercase">
-              Tracks en tendencia
-            </h2>
-          </div>
-          <div className="flex items-center gap-4 flex-1 max-w-xs sm:max-w-md justify-end self-start sm:self-auto w-full">
-            <div className="hidden xs:block h-px bg-white/10 flex-1" />
-            <span className="font-mono text-[10px] tracking-wider text-foreground/40 whitespace-nowrap uppercase">
-              01 / TRENDS COLLECTIVE
-            </span>
-          </div>
+        <div className="border-b border-white/10 pb-4">
+          <span className="font-mono text-[10px] tracking-[0.25em] text-primary uppercase">[ 01 ]</span>
+          <h2 className="font-heading text-2xl font-black tracking-[-0.02em] text-foreground sm:text-3xl md:text-4xl mt-1 uppercase">
+            Tracks en tendencia
+          </h2>
         </div>
 
         {/* Contenedor del Carrusel / Ruleta */}
@@ -508,83 +453,6 @@ export function NewCollection() {
           })}
         </div>
       </div>
-
-      {/* SECCIÓN DE PRECIOS Y LICENCIAS (MONETIZACIÓN) */}
-      <div className="space-y-8 pt-8">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-white/10 pb-4">
-          <div>
-            <span className="font-mono text-[10px] tracking-[0.25em] text-primary uppercase">[ 02 ]</span>
-            <h2 className="font-heading text-2xl font-black tracking-tight text-foreground sm:text-3xl md:text-4xl uppercase">
-              Planes de Licencia de Beats
-            </h2>
-          </div>
-          <div className="flex items-center gap-4 flex-1 max-w-xs sm:max-w-md justify-end self-start sm:self-auto w-full">
-            <div className="hidden xs:block h-px bg-white/10 flex-1" />
-            <span className="font-mono text-[10px] tracking-wider text-foreground/40 whitespace-nowrap uppercase">
-              02 / LICENSES & MONETIZATION
-            </span>
-          </div>
-        </div>
-        <p className="font-mono text-xs text-foreground/60 max-w-xl uppercase">
-          Elige la licencia perfecta para tu proyecto. Monetiza tus canciones en Spotify, Apple Music, YouTube y más.
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {LICENSES.map((lic) => (
-            <div 
-              key={lic.name}
-              className={`relative flex flex-col justify-between p-6 rounded-lg border bg-card/25 backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] ${
-                lic.featured 
-                  ? "border-primary/80 shadow-lg shadow-primary/5" 
-                  : "border-border/60 hover:border-border"
-              }`}
-            >
-              {lic.featured && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded bg-primary text-primary-foreground font-mono text-[9px] tracking-widest font-bold px-3 py-1 shadow uppercase">
-                  Recomendado
-                </span>
-              )}
-              
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <h3 className="font-heading text-xs font-black text-foreground/90 uppercase tracking-widest">
-                    {lic.name}
-                  </h3>
-                  <p className="font-mono text-[9px] tracking-wider text-primary font-semibold uppercase">
-                    {lic.type}
-                  </p>
-                </div>
-                
-                <p className="font-heading text-3xl font-black text-foreground tracking-tight">
-                  {lic.price}
-                </p>
-
-                <ul className="space-y-2 pt-4 border-t border-border/40 font-mono text-[10px] tracking-wide text-foreground/75">
-                  {lic.features.map((feat) => (
-                    <li key={feat} className="flex items-start gap-2">
-                      <span className="text-primary mt-0.5">✓</span>
-                      <span>{feat}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="mt-8">
-                <button
-                  className={`w-full rounded font-mono text-[10px] tracking-widest font-bold py-3 transition-colors ${
-                    lic.featured
-                      ? "bg-primary text-primary-foreground hover:bg-primary/95"
-                      : "bg-card border border-border text-foreground hover:bg-secondary hover:text-foreground"
-                  }`}
-                >
-                  SELECCIONAR
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
     </section>
   )
 }

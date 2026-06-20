@@ -26,34 +26,6 @@ export function ManifestoSection() {
           <p>LA MULTITUD</p>
         </div>
       </div>
-
-      {/* City image with big headline */}
-      <div className="relative h-[420px] w-full overflow-hidden md:h-[560px]">
-        <img
-          src="/images/city-banner.png"
-          alt="Horizonte urbano entre la niebla, estética FRZN"
-          className="absolute inset-0 size-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-background/60" />
-
-        <div className="relative z-10 mx-auto flex h-full max-w-[1400px] flex-col justify-end px-4 pb-10 md:px-8 md:pb-14">
-          <h2 className="font-heading text-3xl font-black leading-[0.9] tracking-[-0.03em] text-foreground sm:text-6xl md:text-7xl">
-            HECHO PARA EL FRÍO
-            <br />
-            FORJADO EN SONIDO
-            <br />
-            CONSTRUIDO PARA DURAR
-          </h2>
-          <div className="mt-6 flex flex-wrap items-end justify-between gap-4 border-t border-border/60 pt-5">
-            <p className="font-mono text-[10px] tracking-[0.18em] text-foreground/55">
-              FRZN SOUND COLLECTIVE · TODOS LOS DERECHOS RESERVADOS
-            </p>
-            <p className="font-mono text-[10px] tracking-[0.4em] text-foreground/70">
-              ████ ██ ████ █ ███
-            </p>
-          </div>
-        </div>
-      </div>
     </section>
   )
 }
