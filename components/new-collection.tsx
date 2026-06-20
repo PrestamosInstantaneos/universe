@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Play, Pause, ShoppingCart, Music, Layers, Disc, CircleHelp } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { Play, Pause, ShoppingCart, Music, Layers, Disc, Download } from "lucide-react"
 
 type Track = {
   id: string
@@ -13,73 +13,83 @@ type Track = {
   key: string
   price: string
   audioUrl: string
+  isAd?: boolean
+  hasDownload?: boolean
+  emoji?: string
 }
 
 const TRACKS: Track[] = [
   {
     id: "1",
     img: "/images/artist-1.png",
-    title: "AURORA SILVER",
-    producer: "FRZN SOUND",
-    tags: ["TRAP", "NEÓN", "808"],
+    title: "Hard melodic free...",
+    producer: "nToucan",
+    tags: ["TRAP", "NEÓN"],
     bpm: 140,
     key: "G# Minor",
-    price: "$29.99",
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+    price: "$10.99",
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+    isAd: true
   },
   {
     id: "2",
     img: "/images/artist-2.png",
-    title: "DIRECT SILVER",
-    producer: "FRZN SOUND",
-    tags: ["R&B", "CHILL"],
+    title: "Lüh rich (Yeat x Ke...",
+    producer: "LokernG",
+    tags: ["R&B"],
     bpm: 95,
     key: "C Major",
-    price: "$29.99",
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"
+    price: "$9.95",
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+    isAd: true
   },
   {
     id: "3",
     img: "/images/artist-3.png",
-    title: "STEALTH BLACK",
-    producer: "FRZN SOUND",
-    tags: ["DRILL", "HEAVY", "808"],
+    title: "[FREE] DARK MEL...",
+    producer: "Onibur",
+    tags: ["DRILL", "808"],
     bpm: 142,
     key: "D# Minor",
-    price: "$29.99",
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"
+    price: "$25.00",
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+    isAd: true,
+    hasDownload: true
   },
   {
     id: "4",
     img: "/images/artist-4.png",
-    title: "GLACIER WHITE",
-    producer: "FRZN SOUND",
-    tags: ["AFROBEATS", "SUMMER"],
+    title: "200 Beats For $50...",
+    producer: "markk aylin",
+    tags: ["AFROBEATS"],
     bpm: 110,
     key: "A Minor",
-    price: "$39.99",
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3"
+    price: "$49.99",
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
+    emoji: "🔥"
   },
   {
     id: "5",
     img: "/images/artist-5.png",
-    title: "POLAR GLOSS",
-    producer: "FRZN SOUND",
-    tags: ["WAVE", "SYNTH"],
+    title: "HURRICANE - 1+4 F...",
+    producer: "Gotenkeys",
+    tags: ["WAVE"],
     bpm: 128,
     key: "F Minor",
-    price: "$29.99",
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3"
+    price: "$50.00",
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
+    emoji: "🌀",
+    hasDownload: true
   },
   {
     id: "6",
     img: "/images/artist-6.png",
-    title: "STEALTH NAVY",
-    producer: "FRZN SOUND",
-    tags: ["HOUSE", "CLUB"],
+    title: "\"Arrest\" | 2+3 FREE | Tra...",
+    producer: "junkey",
+    tags: ["HOUSE"],
     bpm: 124,
     key: "A# Minor",
-    price: "$34.99",
+    price: "$44.95",
     audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3"
   },
   {
@@ -87,18 +97,19 @@ const TRACKS: Track[] = [
     img: "/images/artist-7.png",
     title: "ICEFIELD BLUE",
     producer: "FRZN SOUND",
-    tags: ["REGGAETÓN", "LATIN"],
+    tags: ["REGGAETÓN"],
     bpm: 98,
     key: "E Minor",
     price: "$29.99",
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3"
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3",
+    hasDownload: true
   },
   {
     id: "8",
     img: "/images/artist-8.png",
     title: "POLAR WHITE",
     producer: "FRZN SOUND",
-    tags: ["BOOM BAP", "CLASSIC"],
+    tags: ["BOOM BAP"],
     bpm: 90,
     key: "B Minor",
     price: "$29.99",
@@ -157,6 +168,39 @@ const LICENSES = [
 export function NewCollection() {
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null)
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
+  const [isPaused, setIsPaused] = useState<boolean>(false)
+
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  // Duplicar las pistas para crear un carrusel de bucle infinito suave
+  const doubledTracks = [...TRACKS, ...TRACKS]
+
+  // Ruleta/carrusel de desplazamiento continuo infinito
+  useEffect(() => {
+    const container = scrollRef.current
+    if (!container) return
+
+    let animationFrameId: number
+
+    const scroll = () => {
+      if (!isPaused) {
+        container.scrollLeft += 0.5 // Desplazamiento continuo suave (0.5px por frame)
+        
+        // Si ha recorrido la mitad (primer set de elementos), reiniciar al principio
+        const maxScroll = container.scrollWidth / 2
+        if (container.scrollLeft >= maxScroll) {
+          container.scrollLeft = 0
+        }
+      }
+      animationFrameId = requestAnimationFrame(scroll)
+    }
+
+    animationFrameId = requestAnimationFrame(scroll)
+
+    return () => {
+      cancelAnimationFrame(animationFrameId)
+    }
+  }, [isPaused])
 
   // Escuchar el estado de reproducción del reproductor de audio global
   useEffect(() => {
@@ -199,114 +243,100 @@ export function NewCollection() {
   return (
     <section className="mx-auto max-w-[1400px] px-4 py-12 md:px-8 md:py-20 space-y-20">
       
-      {/* SECCIÓN DE BEATS */}
+      {/* SECCIÓN DE BEATS (RULETA CONTINUA) */}
       <div className="space-y-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border/40 pb-5">
-          <div>
-            <span className="font-mono text-[10px] tracking-[0.25em] text-primary uppercase">[ FRZN TRENDS ]</span>
-            <h2 className="font-heading text-3xl font-black tracking-[-0.02em] text-foreground md:text-4xl mt-1 uppercase">
-              Tracks en tendencia
-            </h2>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-[10px] text-foreground/50 uppercase">ORDENAR POR: POPULARES</span>
-          </div>
+        <div>
+          <span className="font-mono text-[10px] tracking-[0.25em] text-primary uppercase">[ FRZN TRENDS ]</span>
+          <h2 className="font-heading text-3xl font-black tracking-[-0.02em] text-foreground md:text-4xl mt-1 uppercase">
+            Tracks en tendencia
+          </h2>
         </div>
 
-        {/* Lista de Beats interactivos (Fila por Fila, estilo Beatstars) */}
-        <div className="border border-border/60 bg-card/10 divide-y divide-border/40 overflow-hidden rounded-lg">
-          {TRACKS.map((track, index) => {
+        {/* Contenedor del Carrusel / Ruleta sin barras de desplazamiento */}
+        <div 
+          ref={scrollRef}
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+          className="flex gap-6 overflow-x-auto scroll-smooth scrollbar-none snap-x snap-mandatory py-4 cursor-grab active:cursor-grabbing"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
+          {doubledTracks.map((track, index) => {
             const isThisTrackPlaying = currentTrackId === track.id && isPlaying
             return (
-              <div 
-                key={track.id} 
-                className={`group flex flex-col md:flex-row md:items-center gap-4 p-4 transition-all duration-300 ${
-                  currentTrackId === track.id ? "bg-primary/5" : "hover:bg-card/25"
-                }`}
+              <article 
+                key={`${track.id}-${index}`}
+                className="group flex flex-col w-[200px] shrink-0 snap-center"
               >
-                {/* Posición y botón play */}
-                <div className="flex items-center gap-4 shrink-0">
-                  <span className="font-mono text-xs text-foreground/30 w-5 text-center">
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
-                  <button
-                    onClick={() => handlePlayClick(track)}
-                    className={`flex size-10 items-center justify-center rounded-full transition-all border ${
-                      isThisTrackPlaying 
-                        ? "bg-primary text-primary-foreground border-primary scale-105" 
-                        : "bg-card/50 text-foreground/80 border-border hover:border-primary hover:text-primary hover:bg-card"
-                    }`}
-                    aria-label={isThisTrackPlaying ? "Pausar" : "Reproducir"}
-                  >
-                    {isThisTrackPlaying ? (
-                      <Pause className="size-4.5 fill-current" />
-                    ) : (
-                      <Play className="size-4.5 fill-current ml-0.5" />
-                    )}
-                  </button>
+                {/* Portada cuadrada */}
+                <div className="relative aspect-square overflow-hidden border border-border/80 bg-card rounded-md">
+                  <img
+                    src={track.img}
+                    alt={track.title}
+                    className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                  />
+                  {/* Botón de reproducción superpuesto al hacer hover */}
+                  <div className="absolute inset-0 bg-black/55 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => handlePlayClick(track)}
+                      className={`flex size-12 items-center justify-center rounded-full transition-all border shadow-lg ${
+                        isThisTrackPlaying 
+                          ? "bg-primary text-primary-foreground border-primary scale-105" 
+                          : "bg-black/85 text-foreground border-white/20 hover:border-primary hover:text-primary hover:scale-105"
+                      }`}
+                      aria-label={isThisTrackPlaying ? "Pausar" : "Reproducir"}
+                    >
+                      {isThisTrackPlaying ? (
+                        <Pause className="size-5 fill-current" />
+                      ) : (
+                        <Play className="size-5 fill-current ml-0.5" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
-                {/* Portada e información */}
-                <div className="flex items-center gap-4 flex-1">
-                  <div className="relative size-12 overflow-hidden border border-border bg-card shrink-0">
-                    <img
-                      src={track.img}
-                      alt={track.title}
-                      className="size-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <h3 className="font-heading text-sm font-bold text-foreground group-hover:text-primary transition-colors uppercase tracking-tight">
+                {/* Detalles del track (Título y Productor) */}
+                <div className="mt-3 text-left space-y-0.5">
+                  <div className="flex items-center gap-1.5 overflow-hidden">
+                    {track.isAd && (
+                      <span className="bg-foreground/10 text-foreground/45 text-[7px] font-mono font-bold px-1 py-0.5 rounded shrink-0 leading-none">
+                        AD
+                      </span>
+                    )}
+                    {track.emoji && (
+                      <span className="text-xs shrink-0">{track.emoji}</span>
+                    )}
+                    <h3 className="font-heading text-xs font-bold text-foreground truncate w-full uppercase tracking-tight">
                       {track.title}
                     </h3>
-                    <p className="font-mono text-[10px] tracking-[0.14em] text-foreground/50 uppercase mt-0.5">
-                      {track.producer}
-                    </p>
                   </div>
+                  <p className="font-mono text-[9px] tracking-wider text-foreground/50 truncate uppercase">
+                    {track.producer}
+                  </p>
                 </div>
 
-                {/* Detalles técnicos (BPM, Tono) */}
-                <div className="flex items-center gap-8 shrink-0 font-mono text-[11px] text-foreground/70">
-                  <div className="flex items-center gap-1.5 w-20">
-                    <Disc className="size-3.5 text-foreground/40 shrink-0" />
-                    <span>{track.bpm} <span className="text-foreground/45 text-[9px]">BPM</span></span>
-                  </div>
-                  <div className="flex items-center gap-1.5 w-24">
-                    <Music className="size-3.5 text-foreground/40 shrink-0" />
-                    <span>{track.key}</span>
-                  </div>
-                </div>
-
-                {/* Tags de género */}
-                <div className="flex flex-wrap gap-2 shrink-0 md:w-60">
-                  {track.tags.map((tag) => (
-                    <span 
-                      key={tag}
-                      className="font-mono text-[9px] tracking-widest text-foreground/60 border border-border/80 bg-card/30 px-2 py-0.5 uppercase"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Comprar / Monetización */}
-                <div className="flex items-center gap-3 shrink-0 ml-auto md:ml-0">
-                  <span className="font-mono text-sm font-bold text-foreground pr-2">
-                    {track.price}
-                  </span>
+                {/* Botón de compra / precio y descarga */}
+                <div className="mt-4 flex items-center gap-2">
                   <button
                     onClick={() => {
                       const event = new CustomEvent("add-to-cart", { detail: track })
                       window.dispatchEvent(event)
                     }}
-                    className="flex items-center gap-2 rounded bg-primary hover:bg-primary/95 text-primary-foreground font-mono text-[10px] tracking-widest font-bold px-4.5 py-2.5 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded border border-primary/30 bg-primary/5 hover:bg-primary hover:text-primary-foreground text-primary font-mono text-[10px] tracking-widest font-bold py-2.5 transition-colors"
                   >
-                    <ShoppingCart className="size-3.5" />
-                    COMPRAR
+                    <ShoppingCart className="size-3" />
+                    {track.price}
                   </button>
+                  {track.hasDownload && (
+                    <button
+                      onClick={() => console.log("Download preview")}
+                      className="flex size-9 shrink-0 items-center justify-center rounded border border-border bg-card/40 text-foreground/60 hover:text-foreground hover:border-primary transition-colors"
+                      aria-label="Descargar preview"
+                    >
+                      <Download className="size-3.5" />
+                    </button>
+                  )}
                 </div>
-
-              </div>
+              </article>
             )
           })}
         </div>
