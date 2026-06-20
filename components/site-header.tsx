@@ -15,7 +15,7 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false)
 
   return (
-    <header className="relative z-30">
+    <header className="relative z-30 border-b border-white/5 bg-black/20 backdrop-blur-md">
       <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-6 py-5 md:px-8">
         {/* Logo */}
         <a href="#" className="flex items-center gap-2" aria-label="FRZN inicio">

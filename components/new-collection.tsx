@@ -210,7 +210,7 @@ export function NewCollection() {
     
     // Esperar a que rendericen las tarjetas
     const initScroll = () => {
-      const originalWidth = TRACKS.length * 224
+      const originalWidth = TRACKS.length * 244
       container.scrollLeft = originalWidth
     }
 
@@ -223,7 +223,7 @@ export function NewCollection() {
   const handleScroll = () => {
     const container = scrollRef.current
     if (!container) return
-    const originalWidth = TRACKS.length * 224
+    const originalWidth = TRACKS.length * 244
 
     // Si pasamos del final de la segunda tanda, volvemos a la primera tanda
     if (container.scrollLeft >= originalWidth * 2) {
@@ -241,7 +241,7 @@ export function NewCollection() {
     if (!container) return
 
     let animationFrameId: number
-    const originalWidth = TRACKS.length * 224
+    const originalWidth = TRACKS.length * 244
 
     const step = () => {
       // Avanzar lentamente hacia la izquierda si no hay interferencia del usuario
@@ -381,11 +381,19 @@ export function NewCollection() {
       
       {/* SECCIÓN DE BEATS (RULETA DE PASOS) */}
       <div className="space-y-6">
-        <div>
-          <span className="font-mono text-[10px] tracking-[0.25em] text-primary uppercase">[ FRZN TRENDS ]</span>
-          <h2 className="font-heading text-2xl font-black tracking-[-0.02em] text-foreground sm:text-3xl md:text-4xl mt-1 uppercase">
-            Tracks en tendencia
-          </h2>
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-white/10 pb-4">
+          <div>
+            <span className="font-mono text-[10px] tracking-[0.25em] text-primary uppercase">[ 01 ]</span>
+            <h2 className="font-heading text-2xl font-black tracking-[-0.02em] text-foreground sm:text-3xl md:text-4xl mt-1 uppercase">
+              Tracks en tendencia
+            </h2>
+          </div>
+          <div className="flex items-center gap-4 flex-1 max-w-xs sm:max-w-md justify-end self-start sm:self-auto w-full">
+            <div className="hidden xs:block h-px bg-white/10 flex-1" />
+            <span className="font-mono text-[10px] tracking-wider text-foreground/40 whitespace-nowrap uppercase">
+              01 / TRENDS COLLECTIVE
+            </span>
+          </div>
         </div>
 
         {/* Contenedor del Carrusel / Ruleta */}
@@ -409,10 +417,22 @@ export function NewCollection() {
             return (
               <article 
                 key={`${track.id}-${index}`}
-                className="group flex flex-col w-[200px] shrink-0"
+                className="group flex flex-col w-[220px] shrink-0 bg-zinc-900/30 border border-white/5 hover:border-primary/30 rounded-lg p-4 transition-all duration-300 hover:scale-[1.02] hover:bg-zinc-900/50"
               >
+                {/* Numeración superior de la tarjeta */}
+                <div className="flex justify-between items-center mb-3">
+                  <span className="font-mono text-[10px] font-bold text-primary/80">
+                    {((index % TRACKS.length) + 1).toString().padStart(2, '0')} / {TRACKS.length.toString().padStart(2, '0')}
+                  </span>
+                  {track.isAd && (
+                    <span className="bg-foreground/10 text-foreground/45 text-[7px] font-mono font-bold px-1 py-0.5 rounded leading-none">
+                      AD
+                    </span>
+                  )}
+                </div>
+
                 {/* Portada cuadrada */}
-                <div className="relative aspect-square overflow-hidden border border-border/80 bg-card rounded-md">
+                <div className="relative aspect-square overflow-hidden border border-border/80 bg-zinc-950 rounded-md mb-3">
                   <img
                     src={track.img}
                     alt={track.title}
@@ -439,14 +459,9 @@ export function NewCollection() {
                   </div>
                 </div>
 
-                {/* Detalles del track (Título y Productor) */}
-                <div className="mt-3 text-left space-y-0.5">
+                {/* Detalles del track (Título, Productor y Metadatos) */}
+                <div className="text-left space-y-1 flex-1">
                   <div className="flex items-center gap-1.5 overflow-hidden">
-                    {track.isAd && (
-                      <span className="bg-foreground/10 text-foreground/45 text-[7px] font-mono font-bold px-1 py-0.5 rounded shrink-0 leading-none">
-                        AD
-                      </span>
-                    )}
                     {track.emoji && (
                       <span className="text-xs shrink-0">{track.emoji}</span>
                     )}
@@ -457,6 +472,13 @@ export function NewCollection() {
                   <p className="font-mono text-[9px] tracking-wider text-foreground/50 truncate uppercase">
                     {track.producer}
                   </p>
+                  
+                  {/* Metadatos adicionales de beatmaker */}
+                  <div className="flex items-center gap-2 pt-1 font-mono text-[8px] text-foreground/40">
+                    <span>{track.bpm} BPM</span>
+                    <span>•</span>
+                    <span>{track.key}</span>
+                  </div>
                 </div>
 
                 {/* Botón de compra / precio y descarga */}
@@ -466,7 +488,7 @@ export function NewCollection() {
                       const event = new CustomEvent("add-to-cart", { detail: track })
                       window.dispatchEvent(event)
                     }}
-                    className="flex-1 flex items-center justify-center gap-1.5 rounded border border-primary/30 bg-primary/5 hover:bg-primary hover:text-primary-foreground text-primary font-mono text-[10px] tracking-widest font-bold py-2.5 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded border border-primary/30 bg-primary/5 hover:bg-primary hover:text-primary-foreground text-primary font-mono text-[10px] tracking-widest font-bold py-2.5 transition-all"
                   >
                     <ShoppingCart className="size-3" />
                     {track.price}
@@ -489,15 +511,23 @@ export function NewCollection() {
 
       {/* SECCIÓN DE PRECIOS Y LICENCIAS (MONETIZACIÓN) */}
       <div className="space-y-8 pt-8">
-        <div className="text-center space-y-2">
-          <span className="font-mono text-[10px] tracking-[0.25em] text-primary uppercase">[ MONETIZACIÓN ]</span>
-          <h2 className="font-heading text-2xl font-black tracking-tight text-foreground sm:text-3xl md:text-4xl uppercase">
-            Planes de Licencia de Beats
-          </h2>
-          <p className="font-mono text-xs text-foreground/60 max-w-xl mx-auto uppercase">
-            Elige la licencia perfecta para tu proyecto. Monetiza tus canciones en Spotify, Apple Music, YouTube y más.
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-white/10 pb-4">
+          <div>
+            <span className="font-mono text-[10px] tracking-[0.25em] text-primary uppercase">[ 02 ]</span>
+            <h2 className="font-heading text-2xl font-black tracking-tight text-foreground sm:text-3xl md:text-4xl uppercase">
+              Planes de Licencia de Beats
+            </h2>
+          </div>
+          <div className="flex items-center gap-4 flex-1 max-w-xs sm:max-w-md justify-end self-start sm:self-auto w-full">
+            <div className="hidden xs:block h-px bg-white/10 flex-1" />
+            <span className="font-mono text-[10px] tracking-wider text-foreground/40 whitespace-nowrap uppercase">
+              02 / LICENSES & MONETIZATION
+            </span>
+          </div>
         </div>
+        <p className="font-mono text-xs text-foreground/60 max-w-xl uppercase">
+          Elige la licencia perfecta para tu proyecto. Monetiza tus canciones en Spotify, Apple Music, YouTube y más.
+        </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {LICENSES.map((lic) => (
