@@ -4,11 +4,11 @@ import { useState } from "react"
 import { Menu, X, Search, ShoppingBag } from "lucide-react"
 
 const NAV = [
-  { label: "CATÁLOGO", char: "↘" },
-  { label: "ARTISTAS", char: "↘" },
-  { label: "RELEASES", char: "↘" },
-  { label: "GÉNEROS", char: "↘" },
-  { label: "MERCH", char: "↘" },
+  { label: "FEED", char: "↘" },
+  { label: "TRACKS (BEATS)", char: "↘" },
+  { label: "LICENCIAS", char: "↘" },
+  { label: "SOUND KITS", char: "↘" },
+  { label: "SERVICIOS", char: "↘" },
 ]
 
 export function SiteHeader() {
@@ -41,7 +41,13 @@ export function SiteHeader() {
         </nav>
 
         {/* Right icons */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <a
+            href="#"
+            className="hidden sm:inline-flex items-center justify-center border border-primary bg-primary/10 hover:bg-primary hover:text-primary-foreground text-primary font-mono text-[10px] tracking-[0.15em] font-bold px-4.5 py-2 transition-all"
+          >
+            START SELLING
+          </a>
           <button
             className="flex size-9 items-center justify-center border border-border bg-card/40 text-foreground/80 transition-colors hover:bg-card"
             aria-label="Buscar"

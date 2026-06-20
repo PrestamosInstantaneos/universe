@@ -1,4 +1,4 @@
-import { ArrowUpRight, Play, Share2, Radio } from "lucide-react"
+import { ArrowUpRight, Search } from "lucide-react"
 
 const FORMATS = ["DIGITAL", "CD", "VINYL", "CASSETTE"]
 
@@ -30,56 +30,48 @@ export function HeroSection() {
             {/* Top labels */}
             <div className="flex items-center gap-4 font-mono text-[10px] tracking-[0.2em] text-foreground/75 mb-6">
               <span>[ RELEASE No. 01 ]</span>
-              <span>[ FRZN ]</span>
+              <span>[ FRZN SOUND COLLECTIVE ]</span>
             </div>
 
             {/* Headline */}
-            <div>
-              <h1 className="font-heading text-5xl font-black leading-[0.86] tracking-[-0.03em] text-foreground sm:text-6xl md:text-7xl lg:text-8xl">
-                VOLUMEN
+            <div className="space-y-6">
+              <h1 className="font-heading text-4xl font-black leading-[0.95] tracking-[-0.02em] text-foreground sm:text-5xl md:text-6xl lg:text-7xl uppercase">
+                Tu próximo hit
                 <br />
-                ÁRTICO 01
-                <sup className="ml-1 align-super text-sm md:text-base">™</sup>
+                comienza aquí
               </h1>
+              
+              <p className="font-mono text-xs tracking-wider text-foreground/60 max-w-md leading-relaxed uppercase">
+                Encuentra beats exclusivos, instrumentales listos para grabar y colabora con productores del colectivo FRZN.
+              </p>
 
-              {/* Specs */}
-              <div className="mt-8 max-w-sm space-y-3 font-mono text-[11px] tracking-[0.12em] text-foreground/80">
-                <div className="flex items-center gap-4">
-                  <span className="w-16 text-foreground/50">FORMATO</span>
-                  <div className="flex flex-wrap gap-3">
-                    {FORMATS.map((f, i) => (
-                      <span
-                        key={f}
-                        className={i === 2 ? "text-foreground underline underline-offset-4 font-bold" : ""}
-                      >
-                        {f}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="w-16 text-foreground/50">GÉNERO</span>
-                  <div className="flex flex-wrap gap-3">
-                    <span>URBANO</span>
-                    <span className="text-foreground underline underline-offset-4 font-bold">MULTIGÉNERO</span>
-                  </div>
+              {/* Barra de búsqueda interactiva estilo Beatstars */}
+              <div className="relative mt-8 max-w-xl">
+                <div className="relative flex items-center bg-card/60 border border-border/80 hover:border-primary/50 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 rounded-full overflow-hidden transition-all shadow-xl backdrop-blur-md p-1.5">
+                  <Search className="absolute left-4.5 size-4 text-foreground/45" />
+                  <input
+                    type="text"
+                    placeholder="Explora nuevos sonidos: Trap, Drill, R&B, etc..."
+                    className="w-full bg-transparent pl-12 pr-28 py-3.5 font-mono text-[11px] tracking-wider text-foreground placeholder-foreground/35 outline-none"
+                  />
+                  <button className="absolute right-1.5 rounded-full bg-primary hover:bg-primary/95 text-primary-foreground font-mono text-[10px] tracking-widest font-bold px-6 py-3 transition-colors">
+                    BUSCAR
+                  </button>
                 </div>
               </div>
 
-              {/* CTA */}
-              <div className="mt-10 flex items-center gap-5">
-                <button
-                  aria-label="Reproducir release"
-                  className="hexagon flex size-16 shrink-0 items-center justify-center bg-primary text-primary-foreground transition-transform hover:scale-105 md:size-20"
-                >
-                  <ArrowUpRight className="size-6 md:size-7" />
-                </button>
-                <div className="font-mono text-[11px] tracking-[0.14em] text-foreground/80">
-                  <p className="text-foreground/55">ESCUCHAR / COMPRAR</p>
-                  <p className="font-heading text-2xl font-bold tracking-tight text-foreground md:text-3xl">
-                    $9.99
-                  </p>
-                </div>
+              {/* Tags populares */}
+              <div className="flex flex-wrap items-center gap-3 pt-2 font-mono text-[10px] tracking-wider text-foreground/50">
+                <span className="uppercase">Populares:</span>
+                {["#TRAP", "#DRILL", "#AFROBEATS", "#R&B"].map((tag) => (
+                  <a
+                    key={tag}
+                    href="#"
+                    className="text-foreground/75 hover:text-primary transition-colors border border-border bg-card/20 px-2.5 py-1 rounded"
+                  >
+                    {tag}
+                  </a>
+                ))}
               </div>
             </div>
           </div>
