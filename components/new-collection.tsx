@@ -15,7 +15,7 @@ const RELEASES: Release[] = [
     subtitle: "REFLECTIVE TRAP EP",
     tags: [
       { label: "TRAP", tone: "bg-foreground" },
-      { label: "AZUL", tone: "bg-primary" },
+      { label: "NEÓN", tone: "bg-primary" },
     ],
     price: "$9.99",
   },
