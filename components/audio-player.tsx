@@ -148,7 +148,7 @@ export function AudioPlayer() {
       <div className="mx-auto max-w-[1400px] flex items-center justify-between gap-4">
         
         {/* LADO IZQUIERDO: Información del Beat + Botón de Compra */}
-        <div className="flex items-center gap-3 w-1/4 min-w-[200px]">
+        <div className="flex items-center gap-2.5 w-auto flex-initial min-w-0 sm:w-1/4 sm:min-w-[200px]">
           <div className="relative size-10 overflow-hidden border border-border bg-card shrink-0">
             <img src={track.img} alt={track.title} className="size-full object-cover" />
           </div>
@@ -177,7 +177,7 @@ export function AudioPlayer() {
           <div className="flex items-center gap-5">
             {/* Retroceder (Simulado) */}
             <button className="text-foreground/40 hover:text-foreground transition-colors" aria-label="Anterior">
-              <SkipBack className="size-4.5" />
+              <SkipBack className="size-4" />
             </button>
             {/* Play / Pause Principal */}
             <button
@@ -193,7 +193,7 @@ export function AudioPlayer() {
             </button>
             {/* Avanzar (Simulado) */}
             <button className="text-foreground/40 hover:text-foreground transition-colors" aria-label="Siguiente">
-              <SkipForward className="size-4.5" />
+              <SkipForward className="size-4" />
             </button>
           </div>
 

@@ -37,7 +37,7 @@ export function ManifestoSection() {
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-background/60" />
 
         <div className="relative z-10 mx-auto flex h-full max-w-[1400px] flex-col justify-end px-4 pb-10 md:px-8 md:pb-14">
-          <h2 className="font-heading text-4xl font-black leading-[0.88] tracking-[-0.03em] text-foreground sm:text-6xl md:text-7xl">
+          <h2 className="font-heading text-3xl font-black leading-[0.9] tracking-[-0.03em] text-foreground sm:text-6xl md:text-7xl">
             HECHO PARA EL FRÍO
             <br />
             FORJADO EN SONIDO

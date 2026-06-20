@@ -30,7 +30,7 @@ export function HeroSection() {
           <div className="w-full max-w-2xl py-12 lg:py-16">
             {/* Headline */}
             <div className="space-y-6">
-              <h1 className="font-heading text-4xl font-black leading-[0.95] tracking-[-0.02em] text-foreground sm:text-5xl md:text-6xl lg:text-7xl uppercase">
+              <h1 className="font-heading text-3xl min-h-[auto] min-[380px]:text-4xl font-black leading-[0.95] tracking-[-0.02em] text-foreground sm:text-5xl md:text-6xl lg:text-7xl uppercase">
                 Tu próximo hit
                 <br />
                 comienza aquí
@@ -43,13 +43,13 @@ export function HeroSection() {
               {/* Barra de búsqueda interactiva estilo Beatstars */}
               <div className="relative mt-8 max-w-xl">
                 <div className="relative flex items-center bg-card/60 border border-border/80 hover:border-primary/50 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 rounded-full overflow-hidden transition-all shadow-xl backdrop-blur-md p-1.5">
-                  <Search className="absolute left-4.5 size-4 text-foreground/45" />
+                  <Search className="absolute left-3.5 sm:left-4.5 size-3.5 sm:size-4 text-foreground/45" />
                   <input
                     type="text"
-                    placeholder="Explora nuevos sonidos: Trap, Drill, R&B, etc..."
-                    className="w-full bg-transparent pl-12 pr-28 py-3.5 font-mono text-[11px] tracking-wider text-foreground placeholder-foreground/35 outline-none"
+                    placeholder="Explora nuevos sonidos..."
+                    className="w-full bg-transparent pl-10 sm:pl-12 pr-22 sm:pr-28 py-3 sm:py-3.5 font-mono text-[10px] sm:text-[11px] tracking-wider text-foreground placeholder-foreground/35 outline-none"
                   />
-                  <button className="absolute right-1.5 rounded-full bg-primary hover:bg-primary/95 text-primary-foreground font-mono text-[10px] tracking-widest font-bold px-6 py-3 transition-colors">
+                  <button className="absolute right-1.5 rounded-full bg-primary hover:bg-primary/95 text-primary-foreground font-mono text-[9px] sm:text-[10px] tracking-widest font-bold px-4 py-2.5 sm:px-6 sm:py-3 transition-colors">
                     BUSCAR
                   </button>
                 </div>
