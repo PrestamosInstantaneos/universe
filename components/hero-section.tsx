@@ -14,7 +14,7 @@ export function HeroSection() {
             loop
             muted
             playsInline
-            className="absolute inset-y-0 -right-8 h-full w-full lg:w-[62%] object-cover object-center scale-105 origin-right opacity-95"
+            className="absolute inset-y-0 -right-16 h-full w-full lg:w-[65%] object-cover object-[30%_center] scale-115 origin-right opacity-95"
           />
           {/* Capas de degradado para fusionar el video con el fondo negro */}
           {/* En móviles: Degradado vertical para asegurar legibilidad del texto */}
