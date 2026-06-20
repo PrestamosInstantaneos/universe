@@ -382,6 +382,4 @@ export function NewCollection() {
 
     </section>
   )
-}>
-  )
 }
