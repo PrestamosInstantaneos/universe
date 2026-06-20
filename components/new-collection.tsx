@@ -377,13 +377,13 @@ export function NewCollection() {
 
 
   return (
-    <section className="mx-auto max-w-[1400px] px-4 py-12 md:px-8 md:py-20 space-y-20">
+    <section className="mx-auto max-w-[1400px] px-6 py-12 md:px-8 md:py-20 space-y-20">
       
       {/* SECCIÓN DE BEATS (RULETA DE PASOS) */}
       <div className="space-y-6">
         <div>
           <span className="font-mono text-[10px] tracking-[0.25em] text-primary uppercase">[ FRZN TRENDS ]</span>
-          <h2 className="font-heading text-3xl font-black tracking-[-0.02em] text-foreground md:text-4xl mt-1 uppercase">
+          <h2 className="font-heading text-2xl font-black tracking-[-0.02em] text-foreground sm:text-3xl md:text-4xl mt-1 uppercase">
             Tracks en tendencia
           </h2>
         </div>
@@ -491,7 +491,7 @@ export function NewCollection() {
       <div className="space-y-8 pt-8">
         <div className="text-center space-y-2">
           <span className="font-mono text-[10px] tracking-[0.25em] text-primary uppercase">[ MONETIZACIÓN ]</span>
-          <h2 className="font-heading text-3xl font-black tracking-tight text-foreground uppercase">
+          <h2 className="font-heading text-2xl font-black tracking-tight text-foreground sm:text-3xl md:text-4xl uppercase">
             Planes de Licencia de Beats
           </h2>
           <p className="font-mono text-xs text-foreground/60 max-w-xl mx-auto uppercase">

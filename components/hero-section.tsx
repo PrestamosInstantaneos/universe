@@ -26,22 +26,22 @@ export function HeroSection() {
         </div>
 
         {/* Contenedor del contenido alineado con la cabecera de la página */}
-        <div className="relative z-10 mx-auto max-w-[1400px] px-4 md:px-8 flex items-center min-h-[380px] sm:min-h-[420px] lg:min-h-[480px]">
+        <div className="relative z-10 mx-auto max-w-[1400px] px-6 md:px-8 flex items-center min-h-[380px] sm:min-h-[420px] lg:min-h-[480px]">
           <div className="w-full max-w-2xl py-12 lg:py-16">
             {/* Headline */}
             <div className="space-y-6">
-              <h1 className="font-heading text-3xl min-h-[auto] min-[380px]:text-4xl font-black leading-[0.95] tracking-[-0.02em] text-foreground sm:text-5xl md:text-6xl lg:text-7xl uppercase">
+              <h1 className="font-heading text-2xl min-[380px]:text-3xl font-black leading-[1.08] tracking-[-0.02em] text-foreground sm:text-5xl md:text-6xl lg:text-7xl uppercase">
                 Tu próximo hit
                 <br />
                 comienza aquí
               </h1>
               
-              <p className="font-mono text-xs tracking-wider text-foreground/60 max-w-md leading-relaxed uppercase">
+              <p className="font-mono text-xs tracking-wide text-foreground/60 max-w-md leading-relaxed">
                 Encuentra beats exclusivos, instrumentales listos para grabar y colabora con productores del colectivo FRZN.
               </p>
 
               {/* Barra de búsqueda interactiva estilo Beatstars */}
-              <div className="relative mt-8 max-w-xl">
+              <div className="relative mt-6 max-w-xl">
                 <div className="relative flex items-center bg-card/60 border border-border/80 hover:border-primary/50 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 rounded-full overflow-hidden transition-all shadow-xl backdrop-blur-md p-1.5">
                   <Search className="absolute left-3.5 sm:left-4.5 size-3.5 sm:size-4 text-foreground/45" />
                   <input

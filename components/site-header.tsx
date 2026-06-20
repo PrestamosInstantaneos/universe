@@ -16,7 +16,7 @@ export function SiteHeader() {
 
   return (
     <header className="relative z-30">
-      <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-4 py-5 md:px-8">
+      <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-6 py-5 md:px-8">
         {/* Logo */}
         <a href="#" className="flex items-center gap-2" aria-label="FRZN inicio">
           <span className="font-heading text-2xl font-black tracking-[-0.04em] text-foreground md:text-3xl">
