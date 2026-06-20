@@ -117,6 +117,8 @@ const TRACKS: Track[] = [
   }
 ]
 
+const TRIPLED_TRACKS = [...TRACKS, ...TRACKS, ...TRACKS]
+
 const LICENSES = [
   {
     name: "LICENCIA BÁSICA",
@@ -168,22 +170,15 @@ const LICENSES = [
 export function NewCollection() {
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null)
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
-  const [scrollProgress, setScrollProgress] = useState<number>(0)
 
-  // Estados del carrusel interactivo y scrollbar
-  const [thumbWidth, setThumbWidth] = useState<number>(25)
-  const [thumbLeft, setThumbLeft] = useState<number>(0)
-  const [isDraggingThumb, setIsDraggingThumb] = useState<boolean>(false)
+  // Estados del carrusel interactivo continuo
   const [isDraggingContainer, setIsDraggingContainer] = useState<boolean>(false)
   const [isHovering, setIsHovering] = useState<boolean>(false)
   const [isPaused, setIsPaused] = useState<boolean>(false)
 
   const scrollRef = useRef<HTMLDivElement>(null)
-  const trackRef = useRef<HTMLDivElement>(null)
   const resumeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const dragStartX = useRef<number>(0)
-  const dragStartScrollLeft = useRef<number>(0)
   const containerDragStartX = useRef<number>(0)
   const containerDragStartScrollLeft = useRef<number>(0)
   const dragDistance = useRef<number>(0)
@@ -208,163 +203,68 @@ export function NewCollection() {
     }
   }, [])
 
-  // Calcular y actualizar el progreso visual del scrollbar
-  const updateScrollProgress = () => {
+  // Inicializar scrollLeft al centro (en la segunda tanda de 3) para permitir loop infinito bidireccional
+  useEffect(() => {
     const container = scrollRef.current
     if (!container) return
-    const clientWidth = container.clientWidth
-    const scrollWidth = container.scrollWidth
-    const scrollLeft = container.scrollLeft
-
-    const maxScroll = scrollWidth - clientWidth
     
-    // Ancho del thumb proporcional
-    const widthPercent = scrollWidth > 0 ? (clientWidth / scrollWidth) * 100 : 25
-    const clampedWidth = Math.max(10, Math.min(90, widthPercent))
-    setThumbWidth(clampedWidth)
-
-    // Posición del thumb
-    if (maxScroll > 0) {
-      const leftPercent = (scrollLeft / maxScroll) * (100 - clampedWidth)
-      setThumbLeft(leftPercent)
-      setScrollProgress((scrollLeft / maxScroll) * 100)
-    } else {
-      setThumbLeft(0)
-      setScrollProgress(0)
+    // Esperar a que rendericen las tarjetas
+    const initScroll = () => {
+      const originalWidth = TRACKS.length * 224
+      container.scrollLeft = originalWidth
     }
-  }
 
-  const handleScroll = () => {
-    updateScrollProgress()
-  }
-
-  // Escuchar el resize para mantener el scrollbar coherente
-  useEffect(() => {
-    updateScrollProgress()
-    window.addEventListener("resize", updateScrollProgress)
-    return () => {
-      window.removeEventListener("resize", updateScrollProgress)
-    }
+    // Retraso mínimo para asegurar el render inicial de las portadas
+    const timer = setTimeout(initScroll, 50)
+    return () => clearTimeout(timer)
   }, [])
 
-  // Desplazamiento manual mediante flechas
-  const scroll = (direction: "left" | "right") => {
+  // Lógica de loop infinito al hacer scroll manual o drag
+  const handleScroll = () => {
     const container = scrollRef.current
     if (!container) return
-    const scrollAmount = 224 // Ancho de la tarjeta (200px) + gap (24px)
-    if (direction === "left") {
-      container.scrollTo({
-        left: container.scrollLeft - scrollAmount,
-        behavior: "smooth"
-      })
-    } else {
-      container.scrollTo({
-        left: container.scrollLeft + scrollAmount,
-        behavior: "smooth"
-      })
+    const originalWidth = TRACKS.length * 224
+
+    // Si pasamos del final de la segunda tanda, volvemos a la primera tanda
+    if (container.scrollLeft >= originalWidth * 2) {
+      container.scrollLeft = container.scrollLeft - originalWidth
+    } 
+    // Si bajamos del inicio de la segunda tanda, saltamos a la segunda
+    else if (container.scrollLeft <= originalWidth) {
+      container.scrollLeft = container.scrollLeft + originalWidth
     }
   }
 
-  // Autoplay temporizado por pasos (cambia cada 3.5 segundos) de izquierda a derecha
+  // Autoplay continuo de derecha a izquierda (loop infinito lento)
   useEffect(() => {
-    if (isPaused || isHovering || isDraggingContainer || isDraggingThumb) return
-
-    const interval = setInterval(() => {
-      const container = scrollRef.current
-      if (!container) return
-      
-      const maxScroll = container.scrollWidth - container.clientWidth
-      if (maxScroll <= 0) return
-
-      if (container.scrollLeft >= maxScroll - 10) {
-        container.scrollTo({ left: 0, behavior: "smooth" })
-      } else {
-        container.scrollTo({ left: container.scrollLeft + 224, behavior: "smooth" })
-      }
-    }, 3500)
-
-    return () => clearInterval(interval)
-  }, [isPaused, isHovering, isDraggingContainer, isDraggingThumb])
-
-  // Drag del Scrollbar Thumb
-  const handleThumbMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDraggingThumb(true)
-    setIsPaused(true)
-    dragStartX.current = e.clientX
-    if (scrollRef.current) {
-      dragStartScrollLeft.current = scrollRef.current.scrollLeft
-    }
-  }
-
-  useEffect(() => {
-    if (!isDraggingThumb) return
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const container = scrollRef.current
-      const track = trackRef.current
-      if (!container || !track) return
-
-      const deltaX = e.clientX - dragStartX.current
-      const trackWidth = track.clientWidth
-      const maxScroll = container.scrollWidth - container.clientWidth
-
-      if (maxScroll <= 0 || trackWidth <= 0) return
-
-      // Ancho máximo que se puede mover el thumb
-      const maxThumbMovePx = trackWidth * (1 - thumbWidth / 100)
-      if (maxThumbMovePx <= 0) return
-
-      const ratio = deltaX / maxThumbMovePx
-      const newScrollLeft = Math.max(0, Math.min(maxScroll, dragStartScrollLeft.current + ratio * maxScroll))
-      container.scrollLeft = newScrollLeft
-      
-      triggerTempPause()
-    }
-
-    const handleMouseUp = () => {
-      setIsDraggingThumb(false)
-    }
-
-    window.addEventListener("mousemove", handleMouseMove)
-    window.addEventListener("mouseup", handleMouseUp)
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove)
-      window.removeEventListener("mouseup", handleMouseUp)
-    }
-  }, [isDraggingThumb, thumbWidth])
-
-  // Click en la pista (track) del scrollbar
-  const handleTrackMouseDown = (e: React.MouseEvent) => {
-    const track = trackRef.current
     const container = scrollRef.current
-    if (!track || !container) return
+    if (!container) return
 
-    // Evitar disparar si se hizo click en el pulgar (thumb)
-    const target = e.target as HTMLElement
-    if (target.closest(".bg-zinc-400") || target.closest(".bg-primary")) return
+    let animationFrameId: number
+    const originalWidth = TRACKS.length * 224
 
-    const rect = track.getBoundingClientRect()
-    const clickX = e.clientX - rect.left
-    const trackWidth = track.clientWidth
-    const clickRatio = clickX / trackWidth
-    
-    const maxScroll = container.scrollWidth - container.clientWidth
-    if (maxScroll <= 0) return
+    const step = () => {
+      // Avanzar lentamente hacia la izquierda si no hay interferencia del usuario
+      if (!isPaused && !isHovering && !isDraggingContainer) {
+        let nextScroll = container.scrollLeft + 0.65 // 0.65px por frame
+        if (nextScroll >= originalWidth * 2) {
+          nextScroll = nextScroll - originalWidth
+        }
+        container.scrollLeft = nextScroll
+      }
+      animationFrameId = requestAnimationFrame(step)
+    }
 
-    container.scrollTo({
-      left: clickRatio * maxScroll,
-      behavior: "smooth"
-    })
-    triggerTempPause()
-  }
+    animationFrameId = requestAnimationFrame(step)
+    return () => {
+      cancelAnimationFrame(animationFrameId)
+    }
+  }, [isPaused, isHovering, isDraggingContainer])
 
   // Drag del Contenedor del Carrusel (Arrastre de Mouse en Desktop)
   const handleContainerMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return // Solo botón izquierdo
     
-    // Ignorar si se hace click en controles o links
     const target = e.target as HTMLElement
     if (target.closest("button") || target.closest("input") || target.closest("a") || target.closest(".cursor-pointer")) {
       return
@@ -496,7 +396,7 @@ export function NewCollection() {
           onMouseLeave={() => setIsHovering(false)}
           onMouseDown={handleContainerMouseDown}
           onClickCapture={handleContainerClickCapture}
-          className={`flex gap-6 overflow-x-auto scroll-smooth scrollbar-none py-4 px-1 snap-x snap-mandatory ${
+          className={`flex gap-6 overflow-x-auto scrollbar-none py-4 px-1 ${
             isDraggingContainer ? "select-none" : ""
           }`}
           style={{ 
@@ -504,12 +404,12 @@ export function NewCollection() {
             cursor: isDraggingContainer ? "grabbing" : "grab"
           }}
         >
-          {TRACKS.map((track) => {
+          {TRIPLED_TRACKS.map((track, index) => {
             const isThisTrackPlaying = currentTrackId === track.id && isPlaying
             return (
               <article 
-                key={track.id}
-                className="group flex flex-col w-[200px] shrink-0 snap-center"
+                key={`${track.id}-${index}`}
+                className="group flex flex-col w-[200px] shrink-0"
               >
                 {/* Portada cuadrada */}
                 <div className="relative aspect-square overflow-hidden border border-border/80 bg-card rounded-md">
@@ -584,52 +484,6 @@ export function NewCollection() {
               </article>
             )
           })}
-        </div>
-
-        {/* Barra de Navegación y Scrollbar inferior (Estilo Beatstars unificado) */}
-        <div className="flex items-center bg-zinc-900/60 border border-zinc-800/80 rounded-full h-8 px-3 w-full max-w-xl mx-auto select-none">
-          {/* Flecha Izquierda */}
-          <button
-            onClick={() => {
-              triggerTempPause()
-              scroll("left")
-            }}
-            className="text-zinc-400 hover:text-primary transition-colors cursor-pointer pr-3 shrink-0 active:scale-90"
-            aria-label="Desplazar izquierda"
-          >
-            <ChevronLeft className="size-4" />
-          </button>
-
-          {/* Riel y deslizador interactivo de scrollbar */}
-          <div 
-            ref={trackRef}
-            onMouseDown={handleTrackMouseDown}
-            className="relative flex-1 h-1.5 bg-zinc-950/60 rounded-full cursor-pointer mx-1"
-          >
-            <div 
-              onMouseDown={handleThumbMouseDown}
-              className={`absolute top-0 bottom-0 bg-zinc-500 hover:bg-primary rounded-full transition-all duration-150 ${
-                isDraggingThumb ? "bg-primary" : ""
-              }`}
-              style={{ 
-                width: `${thumbWidth}%`,
-                left: `${thumbLeft}%`,
-                cursor: isDraggingThumb ? "grabbing" : "grab"
-              }}
-            />
-          </div>
-
-          {/* Flecha Derecha */}
-          <button
-            onClick={() => {
-              triggerTempPause()
-              scroll("right")
-            }}
-            className="text-zinc-400 hover:text-primary transition-colors cursor-pointer pl-3 shrink-0 active:scale-90"
-            aria-label="Desplazar derecha"
-          >
-            <ChevronRight className="size-4" />
-          </button>
         </div>
       </div>
 
