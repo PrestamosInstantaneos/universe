@@ -114,23 +114,49 @@ export function PopularGenres() {
               transform: translateY(-8px);
             }
           }
+          .hexagon-wrapper {
+            filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.6)) 
+                    drop-shadow(0 0 5px rgba(236, 72, 153, 0.2)) 
+                    drop-shadow(0 0 8px rgba(34, 211, 238, 0.15));
+            transition: filter 0.5s ease-in-out;
+          }
+          .hexagon-wrapper:hover {
+            filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.8)) 
+                    drop-shadow(0 0 12px rgba(236, 72, 153, 0.7)) 
+                    drop-shadow(0 0 20px rgba(34, 211, 238, 0.55));
+          }
+          .glow-border {
+            background: linear-gradient(120deg, #22d3ee, #d946ef, #8b5cf6, #22d3ee);
+            background-size: 300% 300%;
+            animation: border-flow 6s ease infinite;
+          }
+          @keyframes border-flow {
+            0% {
+              background-position: 0% 50%;
+            }
+            50% {
+              background-position: 100% 50%;
+            }
+            100% {
+              background-position: 0% 50%;
+            }
+          }
         `}</style>
         
         {GENRES.map((genre) => (
           <div 
             key={genre.id}
             onClick={() => openSearch(genre.primaryTag)}
-            className="absolute w-[37%] aspect-[1.15/1] cursor-pointer group"
+            className="absolute w-[37%] aspect-[1.15/1] cursor-pointer group hexagon-wrapper"
             style={{
               left: genre.left,
               top: genre.top,
-              filter: "drop-shadow(0 12px 24px rgba(0, 0, 0, 0.65))",
               animation: "float-hexagon 6s ease-in-out infinite",
               animationDelay: genre.delay
             }}
           >
             {/* Hexagon Outer Border */}
-            <div className="w-full h-full bg-white/10 hover:bg-primary transition-all duration-500 clip-hexagon p-[2px] group-hover:scale-[1.03] group-active:scale-[0.98]">
+            <div className="w-full h-full glow-border transition-all duration-500 clip-hexagon p-[2.5px] group-hover:scale-[1.03] group-active:scale-[0.98]">
               {/* Hexagon Content Container */}
               <div className="w-full h-full bg-zinc-950 clip-hexagon relative overflow-hidden">
                 {/* Background Genre Photo */}
