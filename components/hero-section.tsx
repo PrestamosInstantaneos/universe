@@ -1,8 +1,12 @@
+"use client"
+
 import { ArrowUpRight, Search } from "lucide-react"
+import { useCart } from "./cart-context"
 
 const FORMATS = ["DIGITAL", "CD", "VINYL", "CASSETTE"]
 
 export function HeroSection() {
+  const { openSearch } = useCart()
   return (
     <section className="w-full pb-6">
       <div className="relative overflow-hidden border-y border-border bg-black">
@@ -39,14 +43,18 @@ export function HeroSection() {
 
               {/* Barra de búsqueda interactiva estilo Beatstars */}
               <div className="relative w-full max-w-sm mx-auto lg:mx-0">
-                <div className="relative flex items-center bg-card/60 border border-border/80 hover:border-primary/50 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 rounded-full overflow-hidden transition-all shadow-xl backdrop-blur-md p-1.5">
+                <div 
+                  onClick={() => openSearch()}
+                  className="relative flex items-center bg-card/60 border border-border/80 hover:border-primary/50 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 rounded-full overflow-hidden transition-all shadow-xl backdrop-blur-md p-1.5 cursor-pointer"
+                >
                   <Search className="absolute left-3.5 sm:left-4.5 size-3.5 sm:size-4 text-foreground/45" />
                   <input
                     type="text"
                     placeholder="Explora nuevos sonidos..."
-                    className="w-full bg-transparent pl-10 sm:pl-12 pr-22 sm:pr-28 py-3 sm:py-3.5 font-mono text-[10px] sm:text-[11px] tracking-wider text-foreground placeholder-foreground/35 outline-none"
+                    readOnly
+                    className="w-full bg-transparent pl-10 sm:pl-12 pr-22 sm:pr-28 py-3 sm:py-3.5 font-mono text-[10px] sm:text-[11px] tracking-wider text-foreground placeholder-foreground/35 outline-none cursor-pointer"
                   />
-                  <button className="absolute right-1.5 rounded-full bg-primary hover:bg-primary/95 text-primary-foreground font-mono text-[9px] sm:text-[10px] tracking-widest font-bold px-4 py-2.5 sm:px-6 sm:py-3 transition-colors">
+                  <button className="absolute right-1.5 rounded-full bg-primary hover:bg-primary/95 text-primary-foreground font-mono text-[9px] sm:text-[10px] tracking-widest font-bold px-4 py-2.5 sm:px-6 sm:py-3 transition-colors cursor-pointer">
                     BUSCAR
                   </button>
                 </div>
