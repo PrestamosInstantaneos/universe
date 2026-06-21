@@ -4,6 +4,13 @@ import { useState, useEffect, useRef } from "react"
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, ShoppingCart, Music } from "lucide-react"
 import { useCart, Track } from "./cart-context"
 
+const WAVE_BARS = [
+  15, 25, 40, 20, 35, 55, 70, 45, 60, 80, 
+  95, 75, 90, 85, 65, 50, 75, 90, 100, 85, 
+  70, 55, 40, 60, 80, 95, 70, 50, 35, 20, 
+  45, 60, 75, 50, 40, 30, 15
+]
+
 export function AudioPlayer() {
   const { openLicenseModal } = useCart()
   const [track, setTrack] = useState<Track | null>(null)
@@ -142,8 +149,15 @@ export function AudioPlayer() {
         
         {/* LADO IZQUIERDO: Información del Beat + Botón de Compra */}
         <div className="flex items-center gap-2.5 w-auto flex-initial min-w-0 sm:w-1/4 sm:min-w-[200px]">
-          <div className="relative size-10 overflow-hidden border border-border bg-card shrink-0">
+          <div className="relative size-10 overflow-hidden border border-border bg-card shrink-0 group">
             <img src={track.img} alt={track.title} className="size-full object-cover" />
+            {isPlaying && (
+              <div className="absolute inset-0 bg-black/65 flex items-center justify-center gap-[2px] transition-all">
+                <span className="w-[2px] h-3 bg-primary rounded-full animate-bounce [animation-duration:0.8s]" />
+                <span className="w-[2px] h-4 bg-cyan-400 rounded-full animate-bounce [animation-duration:0.5s] [animation-delay:0.25s]" />
+                <span className="w-[2px] h-2.5 bg-fuchsia-500 rounded-full animate-bounce [animation-duration:0.7s] [animation-delay:0.1s]" />
+              </div>
+            )}
           </div>
           <div className="hidden sm:block overflow-hidden mr-2">
             <h4 className="font-heading text-xs font-bold truncate uppercase tracking-tight text-foreground">
@@ -187,20 +201,61 @@ export function AudioPlayer() {
             </button>
           </div>
 
-          {/* Barra de progreso de la pista */}
+          {/* Barra de progreso de la pista con Waveform */}
           <div className="w-full flex items-center gap-3 mt-2">
             <span className="font-mono text-[9px] text-foreground/50 w-7 text-right">
               {formatTime(currentTime)}
             </span>
-            <input
-              ref={progressBarRef}
-              type="range"
-              min={0}
-              max={duration || 100}
-              value={currentTime}
-              onChange={handleProgressChange}
-              className="w-full h-1 bg-secondary rounded-full appearance-none cursor-pointer accent-primary border-none outline-none focus:ring-0 [&::-webkit-slider-runnable-track]:bg-secondary [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:size-2.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary"
-            />
+            
+            {/* Waveform Slider Wrapper */}
+            <div className="relative flex-1 h-8 flex items-center group">
+              <style>{`
+                @keyframes vibrate-bar {
+                  0% {
+                    transform: scaleY(0.75);
+                  }
+                  100% {
+                    transform: scaleY(1.15);
+                  }
+                }
+              `}</style>
+              
+              {/* Waveform bars container */}
+              <div className="w-full h-5 flex items-center justify-between gap-[2px]">
+                {WAVE_BARS.map((height, idx) => {
+                  const progressPercent = duration ? (currentTime / duration) * 100 : 0
+                  const isPlayed = progressPercent >= (idx / (WAVE_BARS.length - 1)) * 100
+                  return (
+                    <span 
+                      key={idx}
+                      className={`w-[3px] rounded-full transition-all duration-300 ${
+                        isPlayed 
+                          ? "bg-gradient-to-t from-primary via-fuchsia-500 to-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.65)]" 
+                          : "bg-white/15"
+                      }`}
+                      style={{ 
+                        height: `${height}%`,
+                        animation: isPlaying && isPlayed ? `vibrate-bar ${0.6 + (idx % 4) * 0.15}s ease-in-out infinite alternate` : "none",
+                        animationDelay: `${idx * 0.03}s`,
+                        transformOrigin: "bottom"
+                      }}
+                    />
+                  )
+                })}
+              </div>
+
+              {/* Transparent Native Range Input on top */}
+              <input
+                ref={progressBarRef}
+                type="range"
+                min={0}
+                max={duration || 100}
+                value={currentTime}
+                onChange={handleProgressChange}
+                className="absolute inset-x-0 w-full h-8 appearance-none bg-transparent cursor-pointer outline-none focus:ring-0 [&::-webkit-slider-runnable-track]:bg-transparent [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:size-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(255,255,255,0.8)] [&::-webkit-slider-thumb]:opacity-0 group-hover:[&::-webkit-slider-thumb]:opacity-100 [&::-webkit-slider-thumb]:transition-opacity"
+              />
+            </div>
+
             <span className="font-mono text-[9px] text-foreground/50 w-7 text-left">
               {formatTime(duration)}
             </span>
