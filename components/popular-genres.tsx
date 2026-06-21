@@ -21,8 +21,8 @@ const GENRES: GenreItem[] = [
     overlayText: "HIP-HOP",
     img: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500&auto=format&fit=crop&q=80",
     primaryTag: "TRAP",
-    left: "33%",
-    top: "5%",
+    left: "31.5%",
+    top: "2.25%",
     delay: "0s"
   },
   {
@@ -31,8 +31,8 @@ const GENRES: GenreItem[] = [
     overlayText: "POP",
     img: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&auto=format&fit=crop&q=80",
     primaryTag: "NEÓN",
-    left: "6%",
-    top: "23.5%",
+    left: "2.75%",
+    top: "21.75%",
     delay: "1.5s"
   },
   {
@@ -41,8 +41,8 @@ const GENRES: GenreItem[] = [
     overlayText: "R&B",
     img: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&auto=format&fit=crop&q=80",
     primaryTag: "R&B",
-    left: "33%",
-    top: "42%",
+    left: "31.5%",
+    top: "41.25%",
     delay: "0.8s"
   },
   {
@@ -51,8 +51,8 @@ const GENRES: GenreItem[] = [
     overlayText: "ROCK",
     img: "https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=500&auto=format&fit=crop&q=80",
     primaryTag: "CLASSIC",
-    left: "60%",
-    top: "23.5%",
+    left: "60.25%",
+    top: "21.75%",
     delay: "2.2s"
   },
   {
@@ -61,8 +61,8 @@ const GENRES: GenreItem[] = [
     overlayText: "ELECTRONIC",
     img: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&auto=format&fit=crop&q=80",
     primaryTag: "HOUSE",
-    left: "6%",
-    top: "60.5%",
+    left: "2.75%",
+    top: "60.75%",
     delay: "1.2s"
   },
   {
@@ -71,8 +71,8 @@ const GENRES: GenreItem[] = [
     overlayText: "REGGAE",
     img: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=500&auto=format&fit=crop&q=80",
     primaryTag: "REGGAETÓN",
-    left: "60%",
-    top: "60.5%",
+    left: "60.25%",
+    top: "60.75%",
     delay: "1.8s"
   }
 ]
@@ -120,7 +120,7 @@ export function PopularGenres() {
           <div 
             key={genre.id}
             onClick={() => openSearch(genre.primaryTag)}
-            className="absolute w-[34%] aspect-[1.15/1] cursor-pointer group"
+            className="absolute w-[37%] aspect-[1.15/1] cursor-pointer group"
             style={{
               left: genre.left,
               top: genre.top,
