@@ -146,9 +146,17 @@ export function ReleasesSection() {
             </h2>
           </div>
           
-          <p className="font-mono text-[11px] leading-relaxed tracking-wide text-foreground/60">
-            Los administradores acaban de actualizar el catálogo con ritmos frescos y exclusivos recién salidos de producción. Explora, escucha y adquiere tu licencia exclusiva antes de que lo haga alguien más.
-          </p>
+          {/* Loop video on left, cropped to hide watermark on bottom right */}
+          <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-white/10 bg-zinc-950 shadow-lg shadow-black/40">
+            <video
+              src="/simbolos_lumini.mp4"
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="size-full object-cover scale-[1.15] origin-top-left pointer-events-none"
+            />
+          </div>
 
           <div>
             <button
