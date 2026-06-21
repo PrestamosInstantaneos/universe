@@ -58,9 +58,19 @@ export function SiteHeader() {
           >
             START SELLING
           </a>
+          {/* Header Search Bar (Desktop) */}
+          <div 
+            onClick={() => openSearch()}
+            className="hidden sm:flex items-center gap-2.5 border border-border bg-card/40 text-foreground/40 hover:text-foreground hover:border-primary/50 px-3.5 py-2.5 rounded-lg w-44 lg:w-52 transition-all cursor-pointer select-none text-[10px] font-mono tracking-wider font-bold"
+          >
+            <Search className="size-3.5 text-foreground/35" />
+            <span>BUSCAR BEATS...</span>
+          </div>
+          
+          {/* Header Search Icon Button (Mobile) */}
           <button
             onClick={() => openSearch()}
-            className="flex size-9 items-center justify-center border border-border bg-card/40 text-foreground/80 transition-colors hover:bg-card cursor-pointer"
+            className="flex sm:hidden size-9 items-center justify-center border border-border bg-card/40 text-foreground/80 transition-colors hover:bg-card cursor-pointer"
             aria-label="Buscar"
           >
             <Search className="size-4" />
