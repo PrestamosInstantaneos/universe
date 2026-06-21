@@ -19,61 +19,71 @@ const GENRES: GenreItem[] = [
     id: "g-hiphop",
     name: "Hip Hop",
     overlayText: "HIP-HOP",
-    img: "/images/artist-1.png",
+    img: "/images/genre_hiphop.png",
     primaryTag: "TRAP",
     left: "31.5%",
-    top: "2.25%",
+    top: "6.3%",
     delay: "0s"
   },
   {
     id: "g-pop",
     name: "Pop",
     overlayText: "POP",
-    img: "/images/artist-2.png",
+    img: "/images/genre_pop.png",
     primaryTag: "NEÓN",
-    left: "2.75%",
-    top: "21.75%",
+    left: "2.5%",
+    top: "21.3%",
     delay: "1.5s"
   },
   {
     id: "g-rnb",
     name: "R&B",
     overlayText: "R&B",
-    img: "/images/artist-3.png",
+    img: "/images/genre_rnb.png",
     primaryTag: "R&B",
     left: "31.5%",
-    top: "41.25%",
+    top: "36.3%",
     delay: "0.8s"
   },
   {
     id: "g-rock",
     name: "Rock",
     overlayText: "ROCK",
-    img: "/images/artist-4.png",
+    img: "/images/genre_rock.png",
     primaryTag: "CLASSIC",
-    left: "60.25%",
-    top: "21.75%",
+    left: "60.5%",
+    top: "21.3%",
     delay: "2.2s"
   },
   {
     id: "g-electronic",
     name: "Electronic",
     overlayText: "ELECTRONIC",
-    img: "/images/artist-5.png",
+    img: "/images/genre_electronic.png",
     primaryTag: "HOUSE",
-    left: "2.75%",
-    top: "60.75%",
+    left: "2.5%",
+    top: "51.3%",
     delay: "1.2s"
   },
   {
     id: "g-reggae",
     name: "Reggae",
     overlayText: "REGGAE",
-    img: "/images/artist-6.png",
+    img: "/images/genre_reggae.png",
     primaryTag: "REGGAETÓN",
-    left: "60.25%",
-    top: "60.75%",
+    left: "60.5%",
+    top: "51.3%",
     delay: "1.8s"
+  },
+  {
+    id: "g-afrobeats",
+    name: "Afrobeats",
+    overlayText: "AFROBEATS",
+    img: "/images/genre_afrobeats.png",
+    primaryTag: "AFROBEATS",
+    left: "31.5%",
+    top: "66.3%",
+    delay: "1.0s"
   }
 ]
 
@@ -100,8 +110,8 @@ export function PopularGenres() {
         </button>
       </div>
 
-      {/* GENRES HONEYCOMB CLUSTER WALL */}
-      <div className="relative w-full max-w-[620px] aspect-[1.15/1] mx-auto my-10 select-none">
+      {/* GENRES HONEYCOMB CLUSTER WALL (Taller aspect ratio to fit the 5th bottom-center row) */}
+      <div className="relative w-full max-w-[500px] aspect-[0.85/1] mx-auto my-10 select-none">
         <style>{`
           .clip-hexagon {
             clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
