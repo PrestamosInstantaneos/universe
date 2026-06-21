@@ -94,14 +94,17 @@ export const LICENSES: License[] = [
 type CartContextType = {
   cart: CartItem[]
   licenseModalTrack: Track | null
+  licenseModalDefaultType: LicenseType
+  licenseModalCartId: string | null
   isCartOpen: boolean
   isPaypalOpen: boolean
   paypalState: 'login' | 'review' | 'processing' | 'success'
   purchasedItems: CartItem[]
   isDownloadsOpen: boolean
-  openLicenseModal: (track: Track) => void
+  openLicenseModal: (track: Track, defaultLicense?: LicenseType, cartId?: string | null) => void
   closeLicenseModal: () => void
   addToCart: (track: Track, licenseType: LicenseType) => void
+  updateCartItemLicense: (cartId: string, licenseType: LicenseType) => void
   removeFromCart: (cartId: string) => void
   toggleItemSelection: (cartId: string) => void
   setCartOpen: (open: boolean) => void
@@ -118,6 +121,8 @@ const CartContext = createContext<CartContextType | undefined>(undefined)
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([])
   const [licenseModalTrack, setLicenseModalTrack] = useState<Track | null>(null)
+  const [licenseModalDefaultType, setLicenseModalDefaultType] = useState<LicenseType>("basic")
+  const [licenseModalCartId, setLicenseModalCartId] = useState<string | null>(null)
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [isPaypalOpen, setIsPaypalOpen] = useState(false)
   const [paypalState, setPaypalState] = useState<'login' | 'review' | 'processing' | 'success'>('login')
@@ -150,12 +155,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("frzn_cart", JSON.stringify(newCart))
   }
 
-  const openLicenseModal = (track: Track) => {
+  const openLicenseModal = (
+    track: Track, 
+    defaultLicense: LicenseType = "basic", 
+    cartId: string | null = null
+  ) => {
     setLicenseModalTrack(track)
+    setLicenseModalDefaultType(defaultLicense)
+    setLicenseModalCartId(cartId)
   }
 
   const closeLicenseModal = () => {
     setLicenseModalTrack(null)
+    setLicenseModalDefaultType("basic")
+    setLicenseModalCartId(null)
   }
 
   const parseBasePrice = (priceStr: string): number => {
@@ -187,6 +200,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
       saveCartToStorage([...cart, newItem])
     }
+  }
+
+  const updateCartItemLicense = (cartId: string, licenseType: LicenseType) => {
+    const license = LICENSES.find(l => l.type === licenseType)
+    const newCart = cart.map(item => {
+      if (item.cartId === cartId) {
+        const basePrice = parseBasePrice(item.track.price)
+        const finalPrice = basePrice + (license ? license.priceOffset : 0)
+        return {
+          ...item,
+          licenseType,
+          price: parseFloat(finalPrice.toFixed(2))
+        }
+      }
+      return item
+    })
+    saveCartToStorage(newCart)
   }
 
   const removeFromCart = (cartId: string) => {
@@ -242,6 +272,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     <CartContext.Provider value={{
       cart,
       licenseModalTrack,
+      licenseModalDefaultType,
+      licenseModalCartId,
       isCartOpen,
       isPaypalOpen,
       paypalState,
@@ -250,6 +282,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       openLicenseModal,
       closeLicenseModal,
       addToCart,
+      updateCartItemLicense,
       removeFromCart,
       toggleItemSelection,
       setCartOpen: setIsCartOpen,

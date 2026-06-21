@@ -11,7 +11,8 @@ export function CartDrawer() {
     setCartOpen, 
     removeFromCart, 
     toggleItemSelection, 
-    startCheckout 
+    startCheckout,
+    openLicenseModal
   } = useCart()
 
   // Calcular items seleccionados y totales
@@ -112,26 +113,33 @@ export function CartDrawer() {
                     {item.selected && <Check className="size-3.5 stroke-[3]" />}
                   </button>
 
-                  {/* Artwork Image */}
-                  <div className="relative size-12 overflow-hidden border border-white/15 bg-zinc-900 rounded shrink-0">
-                    <img 
-                      src={item.track.img} 
-                      alt={item.track.title} 
-                      className="size-full object-cover"
-                    />
-                  </div>
+                  {/* Clickable details trigger */}
+                  <div 
+                    onClick={() => openLicenseModal(item.track, item.licenseType, item.cartId)}
+                    className="flex-1 flex items-center gap-3.5 min-w-0 text-left cursor-pointer group/cartitem hover:opacity-85 transition-opacity"
+                    title="Hacer clic para ver detalles y licencias"
+                  >
+                    {/* Artwork Image */}
+                    <div className="relative size-12 overflow-hidden border border-white/15 bg-zinc-900 rounded shrink-0 group-hover/cartitem:border-primary/45 transition-all">
+                      <img 
+                        src={item.track.img} 
+                        alt={item.track.title} 
+                        className="size-full object-cover"
+                      />
+                    </div>
 
-                  {/* Info Details */}
-                  <div className="flex-1 min-w-0 text-left">
-                    <h4 className="font-heading text-xs font-bold text-foreground truncate uppercase tracking-tight">
-                      {item.track.title}
-                    </h4>
-                    <p className="font-mono text-[8px] text-foreground/45 uppercase tracking-wide truncate mt-0.5">
-                      {item.track.producer}
-                    </p>
-                    <span className="inline-block font-mono text-[7px] text-primary/80 uppercase tracking-widest bg-primary/5 border border-primary/10 px-1 py-0.5 rounded mt-1.5 font-bold">
-                      {license?.name || item.licenseType}
-                    </span>
+                    {/* Info Details */}
+                    <div className="flex-1 min-w-0 text-left">
+                      <h4 className="font-heading text-xs font-bold text-foreground truncate uppercase tracking-tight group-hover/cartitem:text-primary transition-colors">
+                        {item.track.title}
+                      </h4>
+                      <p className="font-mono text-[8px] text-foreground/45 uppercase tracking-wide truncate mt-0.5">
+                        {item.track.producer}
+                      </p>
+                      <span className="inline-block font-mono text-[7px] text-primary/80 uppercase tracking-widest bg-primary/5 border border-primary/10 px-1 py-0.5 rounded mt-1.5 font-bold">
+                        {license?.name || item.licenseType}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Price & Remove */}

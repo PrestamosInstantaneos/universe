@@ -1,12 +1,29 @@
 "use client"
 
-import React, { useState } from "react"
-import { X, Check, ShoppingCart, ShieldCheck, Music, Disc, RefreshCw } from "lucide-react"
+import React, { useState, useEffect } from "react"
+import { X, Check, ShoppingCart, ShieldCheck, Music, Disc } from "lucide-react"
 import { useCart, LICENSES, LicenseType } from "./cart-context"
 
 export function LicenseModal() {
-  const { licenseModalTrack, closeLicenseModal, addToCart, setCartOpen, startCheckout } = useCart()
+  const { 
+    licenseModalTrack, 
+    closeLicenseModal, 
+    addToCart, 
+    setCartOpen, 
+    startCheckout,
+    licenseModalDefaultType,
+    licenseModalCartId,
+    updateCartItemLicense
+  } = useCart()
+
   const [selectedLicense, setSelectedLicense] = useState<LicenseType>("basic")
+
+  // Sincronizar el estado interno de la licencia cuando cambie la predeterminada al abrirse
+  useEffect(() => {
+    if (licenseModalTrack) {
+      setSelectedLicense(licenseModalDefaultType)
+    }
+  }, [licenseModalTrack, licenseModalDefaultType])
 
   if (!licenseModalTrack) return null
 
@@ -21,12 +38,18 @@ export function LicenseModal() {
   const handleBuyNow = () => {
     addToCart(licenseModalTrack, selectedLicense)
     closeLicenseModal()
-    // Iniciar checkout directamente
     startCheckout()
   }
 
+  const handleUpdateInCart = () => {
+    if (licenseModalCartId) {
+      updateCartItemLicense(licenseModalCartId, selectedLicense)
+      closeLicenseModal()
+    }
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-200">
       {/* Modal Card Container */}
       <div className="relative w-full max-w-4xl bg-zinc-950/90 border border-white/10 rounded-xl overflow-hidden shadow-2xl flex flex-col md:flex-row max-h-[90vh] md:max-h-[85vh]">
         
@@ -43,7 +66,7 @@ export function LicenseModal() {
         <div className="w-full md:w-2/5 p-6 bg-zinc-900/40 border-b md:border-b-0 md:border-r border-white/5 flex flex-col justify-between shrink-0">
           <div className="space-y-4">
             <span className="font-mono text-[9px] tracking-[0.2em] text-primary uppercase font-bold px-2.5 py-1 bg-primary/10 rounded border border-primary/20 inline-block">
-              ELEGIR LICENCIA
+              {licenseModalCartId ? "DETALLES DEL PRODUCTO" : "ELEGIR LICENCIA"}
             </span>
 
             {/* Track Album Art Cover */}
@@ -98,7 +121,7 @@ export function LicenseModal() {
         <div className="w-full md:w-3/5 p-6 flex flex-col justify-between overflow-y-auto">
           <div className="space-y-4">
             <h4 className="font-heading text-sm font-bold uppercase tracking-wider text-foreground">
-              Selecciona tu tipo de contrato
+              {licenseModalCartId ? "Revisar/Cambiar Contrato de Licencia" : "Selecciona tu tipo de contrato"}
             </h4>
             
             {/* Grid of Licenses */}
@@ -166,25 +189,46 @@ export function LicenseModal() {
             </div>
           </div>
 
-          {/* ACTION BUTTONS */}
+          {/* ACTION BUTTONS (Context-Dependent) */}
           <div className="mt-6 pt-4 border-t border-white/5 flex flex-col sm:flex-row gap-3">
-            {/* Button 1: Add to Cart and View */}
-            <button
-              onClick={handleAddToCartAndView}
-              className="flex-1 flex items-center justify-center gap-2 border border-white/10 bg-zinc-900 hover:bg-zinc-800 text-foreground font-mono text-[10px] tracking-widest font-bold py-3 rounded-lg transition-all active:scale-[0.98] cursor-pointer"
-            >
-              <ShoppingCart className="size-4 text-primary" />
-              AÑADIR Y VER CARRITO
-            </button>
+            {licenseModalCartId ? (
+              <>
+                {/* Mode: Edit Cart Item Details */}
+                <button
+                  onClick={closeLicenseModal}
+                  className="flex-1 flex items-center justify-center gap-2 border border-white/10 bg-zinc-900 hover:bg-zinc-800 text-foreground font-mono text-[10px] tracking-widest font-bold py-3 rounded-lg transition-all active:scale-[0.98] cursor-pointer"
+                >
+                  CERRAR DETALLES
+                </button>
 
-            {/* Button 2: Buy Now */}
-            <button
-              onClick={handleBuyNow}
-              className="flex-1 flex items-center justify-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-mono text-[10px] tracking-widest font-bold py-3 rounded-lg shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all active:scale-[0.98] cursor-pointer"
-            >
-              <Disc className="size-4 fill-current animate-spin-slow shrink-0" />
-              COMPRAR AHORA (BUY NOW)
-            </button>
+                <button
+                  onClick={handleUpdateInCart}
+                  className="flex-1 flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-mono text-[10px] tracking-widest font-bold py-3 rounded-lg shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/35 transition-all active:scale-[0.98] cursor-pointer"
+                >
+                  <Check className="size-4 shrink-0 stroke-[3]" />
+                  ACTUALIZAR EN CARRITO
+                </button>
+              </>
+            ) : (
+              <>
+                {/* Mode: Standard Purchase License Choice */}
+                <button
+                  onClick={handleAddToCartAndView}
+                  className="flex-1 flex items-center justify-center gap-2 border border-white/10 bg-zinc-900 hover:bg-zinc-800 text-foreground font-mono text-[10px] tracking-widest font-bold py-3 rounded-lg transition-all active:scale-[0.98] cursor-pointer"
+                >
+                  <ShoppingCart className="size-4 text-primary" />
+                  AÑADIR Y VER CARRITO
+                </button>
+
+                <button
+                  onClick={handleBuyNow}
+                  className="flex-1 flex items-center justify-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-mono text-[10px] tracking-widest font-bold py-3 rounded-lg shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all active:scale-[0.98] cursor-pointer"
+                >
+                  <Disc className="size-4 fill-current animate-spin-slow shrink-0" />
+                  COMPRAR AHORA (BUY NOW)
+                </button>
+              </>
+            )}
           </div>
 
         </div>
