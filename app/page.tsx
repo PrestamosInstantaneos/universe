@@ -2,6 +2,7 @@ import { SiteHeader } from "@/components/site-header"
 import { HeroSection } from "@/components/hero-section"
 import { NewCollection } from "@/components/new-collection"
 import { PopularGenres } from "@/components/popular-genres"
+import { NewsSection } from "@/components/news-section"
 import { ReleasesSection } from "@/components/releases-section"
 import { ManifestoSection } from "@/components/manifesto-section"
 import { SiteFooter } from "@/components/site-footer"
@@ -15,6 +16,7 @@ export default function Page() {
       <NewCollection />
       <ReleasesSection />
       <PopularGenres />
+      <NewsSection />
       <ManifestoSection />
       <SiteFooter />
       <AudioPlayer />
