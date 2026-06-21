@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { Play, Pause, ShoppingCart, Music, ChevronRight } from "lucide-react"
+import { Play, Pause, ShoppingCart, ChevronRight } from "lucide-react"
 import { useCart, Track } from "./cart-context"
 
 const RELEASES: Track[] = [
@@ -109,6 +109,30 @@ export function ReleasesSection() {
 
   return (
     <section className="mx-auto max-w-[1400px] px-6 py-12 md:px-8 md:py-20 border-t border-white/5">
+      
+      {/* Injected loop scroll animations */}
+      <style>{`
+        .scroll-col-up {
+          animation: scrollColumnUp 24s linear infinite;
+        }
+        .scroll-col-down {
+          animation: scrollColumnDown 24s linear infinite;
+        }
+        .releases-scroll-container:hover .scroll-col-up,
+        .releases-scroll-container:hover .scroll-col-down {
+          animation-play-state: paused;
+        }
+        
+        @keyframes scrollColumnUp {
+          0% { transform: translateY(0); }
+          100% { transform: translateY(-50%); }
+        }
+        @keyframes scrollColumnDown {
+          0% { transform: translateY(-50%); }
+          100% { transform: translateY(0); }
+        }
+      `}</style>
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
         
         {/* LEFT COLUMN: Text Content & Branding */}
@@ -143,179 +167,319 @@ export function ReleasesSection() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Staggered Staggered Cover Grid (Masonry look-alike) */}
-        <div className="lg:col-span-7">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
+        {/* RIGHT COLUMN: Infinite Vertical Scroll Staggered Grid */}
+        <div className="lg:col-span-7 relative h-[620px] overflow-hidden rounded-2xl border border-white/5 bg-zinc-950/20 px-4 py-2 releases-scroll-container">
+          
+          {/* Top Fade Overlay */}
+          <div className="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-background to-transparent z-10 pointer-events-none" />
+          
+          {/* Bottom Fade Overlay */}
+          <div className="absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-background to-transparent z-10 pointer-events-none" />
+
+          {/* Staggered Columns Wrapper */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 h-full">
             
-            {/* Column 1 (Staggered Downward) */}
-            <div className="space-y-6 pt-12">
-              {[RELEASES[0], RELEASES[1]].map((track) => {
-                const isThisTrackPlaying = currentTrackId === track.id && isPlaying
-                return (
-                  <div 
-                    key={track.id}
-                    className="group relative aspect-[3/4] rounded-xl overflow-hidden border border-white/5 bg-zinc-950/40 shadow-xl transition-all duration-500 hover:scale-[1.03] hover:border-primary/40 hover:shadow-primary/5"
-                  >
-                    <img 
-                      src={track.img} 
-                      alt={track.title} 
-                      className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                    
-                    {/* Dark gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300" />
-                    
-                    {/* Play Button Overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <button
-                        onClick={() => handlePlayClick(track)}
-                        className={`size-12 rounded-full flex items-center justify-center border shadow-xl transition-all duration-300 cursor-pointer ${
-                          isThisTrackPlaying
-                            ? "bg-primary text-primary-foreground border-primary scale-110"
-                            : "bg-black/90 text-foreground border-white/20 hover:border-primary hover:text-primary hover:scale-110"
-                        }`}
-                      >
-                        {isThisTrackPlaying ? <Pause className="size-5 fill-current" /> : <Play className="size-5 fill-current ml-0.5" />}
-                      </button>
-                    </div>
-
-                    {/* Bottom Metadata & Purchase Button */}
-                    <div className="absolute bottom-0 inset-x-0 p-4.5 space-y-2 flex flex-col justify-end text-left select-none">
-                      <div>
-                        <h4 className="font-heading text-xs font-bold text-foreground uppercase tracking-tight line-clamp-1">
-                          {track.title}
-                        </h4>
-                        <p className="font-mono text-[8px] text-foreground/45 uppercase tracking-widest mt-0.5">
-                          {track.producer}
-                        </p>
+            {/* Column 1 (Scrolls UP) */}
+            <div className="scroll-col-up flex flex-col">
+              
+              {/* Group 1 */}
+              <div className="flex flex-col gap-6 pb-6 shrink-0">
+                {[RELEASES[0], RELEASES[1]].map((track) => {
+                  const isThisTrackPlaying = currentTrackId === track.id && isPlaying
+                  return (
+                    <div 
+                      key={`${track.id}-g1`}
+                      className="group relative aspect-[3/4] rounded-xl overflow-hidden border border-white/5 bg-zinc-950/40 shadow-xl transition-all duration-500 hover:scale-[1.03] hover:border-primary/40 hover:shadow-primary/5"
+                    >
+                      <img 
+                        src={track.img} 
+                        alt={track.title} 
+                        className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300" />
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <button
+                          onClick={() => handlePlayClick(track)}
+                          className={`size-12 rounded-full flex items-center justify-center border shadow-xl transition-all duration-300 cursor-pointer ${
+                            isThisTrackPlaying
+                              ? "bg-primary text-primary-foreground border-primary scale-110"
+                              : "bg-black/90 text-foreground border-white/20 hover:border-primary hover:text-primary hover:scale-110"
+                          }`}
+                        >
+                          {isThisTrackPlaying ? <Pause className="size-5 fill-current" /> : <Play className="size-5 fill-current ml-0.5" />}
+                        </button>
                       </div>
-                      
-                      {/* Price / Shopping Badge */}
-                      <button
-                        onClick={() => openLicenseModal(track)}
-                        className="w-full flex items-center justify-center gap-1.5 rounded bg-white/5 hover:bg-primary border border-white/10 hover:border-primary text-foreground hover:text-primary-foreground font-mono text-[9px] tracking-wider font-bold py-2 transition-all cursor-pointer"
-                      >
-                        <ShoppingCart className="size-3" />
-                        COMPRAR {track.price}
-                      </button>
+                      <div className="absolute bottom-0 inset-x-0 p-4 flex flex-col justify-end text-left select-none">
+                        <div>
+                          <h4 className="font-heading text-xs font-bold text-foreground uppercase tracking-tight line-clamp-1">
+                            {track.title}
+                          </h4>
+                          <p className="font-mono text-[8px] text-foreground/45 uppercase tracking-widest mt-0.5">
+                            {track.producer}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => openLicenseModal(track)}
+                          className="w-full flex items-center justify-center gap-1.5 rounded bg-white/5 hover:bg-primary border border-white/10 hover:border-primary text-foreground hover:text-primary-foreground font-mono text-[9px] tracking-wider font-bold py-2 mt-2 transition-all cursor-pointer"
+                        >
+                          COMPRAR {track.price}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
+
+              {/* Group 2 (Duplicate for Seamless Loop) */}
+              <div className="flex flex-col gap-6 pb-6 shrink-0">
+                {[RELEASES[0], RELEASES[1]].map((track) => {
+                  const isThisTrackPlaying = currentTrackId === track.id && isPlaying
+                  return (
+                    <div 
+                      key={`${track.id}-g2`}
+                      className="group relative aspect-[3/4] rounded-xl overflow-hidden border border-white/5 bg-zinc-950/40 shadow-xl transition-all duration-500 hover:scale-[1.03] hover:border-primary/40 hover:shadow-primary/5"
+                    >
+                      <img 
+                        src={track.img} 
+                        alt={track.title} 
+                        className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300" />
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <button
+                          onClick={() => handlePlayClick(track)}
+                          className={`size-12 rounded-full flex items-center justify-center border shadow-xl transition-all duration-300 cursor-pointer ${
+                            isThisTrackPlaying
+                              ? "bg-primary text-primary-foreground border-primary scale-110"
+                              : "bg-black/90 text-foreground border-white/20 hover:border-primary hover:text-primary hover:scale-110"
+                          }`}
+                        >
+                          {isThisTrackPlaying ? <Pause className="size-5 fill-current" /> : <Play className="size-5 fill-current ml-0.5" />}
+                        </button>
+                      </div>
+                      <div className="absolute bottom-0 inset-x-0 p-4 flex flex-col justify-end text-left select-none">
+                        <div>
+                          <h4 className="font-heading text-xs font-bold text-foreground uppercase tracking-tight line-clamp-1">
+                            {track.title}
+                          </h4>
+                          <p className="font-mono text-[8px] text-foreground/45 uppercase tracking-widest mt-0.5">
+                            {track.producer}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => openLicenseModal(track)}
+                          className="w-full flex items-center justify-center gap-1.5 rounded bg-white/5 hover:bg-primary border border-white/10 hover:border-primary text-foreground hover:text-primary-foreground font-mono text-[9px] tracking-wider font-bold py-2 mt-2 transition-all cursor-pointer"
+                        >
+                          COMPRAR {track.price}
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
             </div>
 
-            {/* Column 2 (Starting Normal) */}
-            <div className="space-y-6">
-              {[RELEASES[2], RELEASES[3]].map((track) => {
-                const isThisTrackPlaying = currentTrackId === track.id && isPlaying
-                return (
-                  <div 
-                    key={track.id}
-                    className="group relative aspect-[3/4] rounded-xl overflow-hidden border border-white/5 bg-zinc-950/40 shadow-xl transition-all duration-500 hover:scale-[1.03] hover:border-primary/40 hover:shadow-primary/5"
-                  >
-                    <img 
-                      src={track.img} 
-                      alt={track.title} 
-                      className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                    
-                    {/* Dark gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300" />
-                    
-                    {/* Play Button Overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <button
-                        onClick={() => handlePlayClick(track)}
-                        className={`size-12 rounded-full flex items-center justify-center border shadow-xl transition-all duration-300 cursor-pointer ${
-                          isThisTrackPlaying
-                            ? "bg-primary text-primary-foreground border-primary scale-110"
-                            : "bg-black/90 text-foreground border-white/20 hover:border-primary hover:text-primary hover:scale-110"
-                        }`}
-                      >
-                        {isThisTrackPlaying ? <Pause className="size-5 fill-current" /> : <Play className="size-5 fill-current ml-0.5" />}
-                      </button>
-                    </div>
-
-                    {/* Bottom Metadata & Purchase Button */}
-                    <div className="absolute bottom-0 inset-x-0 p-4.5 space-y-2 flex flex-col justify-end text-left select-none">
-                      <div>
-                        <h4 className="font-heading text-xs font-bold text-foreground uppercase tracking-tight line-clamp-1">
-                          {track.title}
-                        </h4>
-                        <p className="font-mono text-[8px] text-foreground/45 uppercase tracking-widest mt-0.5">
-                          {track.producer}
-                        </p>
+            {/* Column 2 (Scrolls DOWN) */}
+            <div className="scroll-col-down flex flex-col">
+              
+              {/* Group 1 */}
+              <div className="flex flex-col gap-6 pb-6 shrink-0">
+                {[RELEASES[2], RELEASES[3]].map((track) => {
+                  const isThisTrackPlaying = currentTrackId === track.id && isPlaying
+                  return (
+                    <div 
+                      key={`${track.id}-g1`}
+                      className="group relative aspect-[3/4] rounded-xl overflow-hidden border border-white/5 bg-zinc-950/40 shadow-xl transition-all duration-500 hover:scale-[1.03] hover:border-primary/40 hover:shadow-primary/5"
+                    >
+                      <img 
+                        src={track.img} 
+                        alt={track.title} 
+                        className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300" />
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <button
+                          onClick={() => handlePlayClick(track)}
+                          className={`size-12 rounded-full flex items-center justify-center border shadow-xl transition-all duration-300 cursor-pointer ${
+                            isThisTrackPlaying
+                              ? "bg-primary text-primary-foreground border-primary scale-110"
+                              : "bg-black/90 text-foreground border-white/20 hover:border-primary hover:text-primary hover:scale-110"
+                          }`}
+                        >
+                          {isThisTrackPlaying ? <Pause className="size-5 fill-current" /> : <Play className="size-5 fill-current ml-0.5" />}
+                        </button>
                       </div>
-                      
-                      {/* Price / Shopping Badge */}
-                      <button
-                        onClick={() => openLicenseModal(track)}
-                        className="w-full flex items-center justify-center gap-1.5 rounded bg-white/5 hover:bg-primary border border-white/10 hover:border-primary text-foreground hover:text-primary-foreground font-mono text-[9px] tracking-wider font-bold py-2 transition-all cursor-pointer"
-                      >
-                        <ShoppingCart className="size-3" />
-                        COMPRAR {track.price}
-                      </button>
+                      <div className="absolute bottom-0 inset-x-0 p-4 flex flex-col justify-end text-left select-none">
+                        <div>
+                          <h4 className="font-heading text-xs font-bold text-foreground uppercase tracking-tight line-clamp-1">
+                            {track.title}
+                          </h4>
+                          <p className="font-mono text-[8px] text-foreground/45 uppercase tracking-widest mt-0.5">
+                            {track.producer}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => openLicenseModal(track)}
+                          className="w-full flex items-center justify-center gap-1.5 rounded bg-white/5 hover:bg-primary border border-white/10 hover:border-primary text-foreground hover:text-primary-foreground font-mono text-[9px] tracking-wider font-bold py-2 mt-2 transition-all cursor-pointer"
+                        >
+                          COMPRAR {track.price}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
+
+              {/* Group 2 (Duplicate for Seamless Loop) */}
+              <div className="flex flex-col gap-6 pb-6 shrink-0">
+                {[RELEASES[2], RELEASES[3]].map((track) => {
+                  const isThisTrackPlaying = currentTrackId === track.id && isPlaying
+                  return (
+                    <div 
+                      key={`${track.id}-g2`}
+                      className="group relative aspect-[3/4] rounded-xl overflow-hidden border border-white/5 bg-zinc-950/40 shadow-xl transition-all duration-500 hover:scale-[1.03] hover:border-primary/40 hover:shadow-primary/5"
+                    >
+                      <img 
+                        src={track.img} 
+                        alt={track.title} 
+                        className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300" />
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <button
+                          onClick={() => handlePlayClick(track)}
+                          className={`size-12 rounded-full flex items-center justify-center border shadow-xl transition-all duration-300 cursor-pointer ${
+                            isThisTrackPlaying
+                              ? "bg-primary text-primary-foreground border-primary scale-110"
+                              : "bg-black/90 text-foreground border-white/20 hover:border-primary hover:text-primary hover:scale-110"
+                          }`}
+                        >
+                          {isThisTrackPlaying ? <Pause className="size-5 fill-current" /> : <Play className="size-5 fill-current ml-0.5" />}
+                        </button>
+                      </div>
+                      <div className="absolute bottom-0 inset-x-0 p-4 flex flex-col justify-end text-left select-none">
+                        <div>
+                          <h4 className="font-heading text-xs font-bold text-foreground uppercase tracking-tight line-clamp-1">
+                            {track.title}
+                          </h4>
+                          <p className="font-mono text-[8px] text-foreground/45 uppercase tracking-widest mt-0.5">
+                            {track.producer}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => openLicenseModal(track)}
+                          className="w-full flex items-center justify-center gap-1.5 rounded bg-white/5 hover:bg-primary border border-white/10 hover:border-primary text-foreground hover:text-primary-foreground font-mono text-[9px] tracking-wider font-bold py-2 mt-2 transition-all cursor-pointer"
+                        >
+                          COMPRAR {track.price}
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
             </div>
 
-            {/* Column 3 (Staggered Halfway) */}
-            <div className="space-y-6 pt-6 hidden sm:block">
-              {[RELEASES[4], RELEASES[5]].map((track) => {
-                const isThisTrackPlaying = currentTrackId === track.id && isPlaying
-                return (
-                  <div 
-                    key={track.id}
-                    className="group relative aspect-[3/4] rounded-xl overflow-hidden border border-white/5 bg-zinc-950/40 shadow-xl transition-all duration-500 hover:scale-[1.03] hover:border-primary/40 hover:shadow-primary/5"
-                  >
-                    <img 
-                      src={track.img} 
-                      alt={track.title} 
-                      className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                    
-                    {/* Dark gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300" />
-                    
-                    {/* Play Button Overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <button
-                        onClick={() => handlePlayClick(track)}
-                        className={`size-12 rounded-full flex items-center justify-center border shadow-xl transition-all duration-300 cursor-pointer ${
-                          isThisTrackPlaying
-                            ? "bg-primary text-primary-foreground border-primary scale-110"
-                            : "bg-black/90 text-foreground border-white/20 hover:border-primary hover:text-primary hover:scale-110"
-                        }`}
-                      >
-                        {isThisTrackPlaying ? <Pause className="size-5 fill-current" /> : <Play className="size-5 fill-current ml-0.5" />}
-                      </button>
-                    </div>
-
-                    {/* Bottom Metadata & Purchase Button */}
-                    <div className="absolute bottom-0 inset-x-0 p-4.5 space-y-2 flex flex-col justify-end text-left select-none">
-                      <div>
-                        <h4 className="font-heading text-xs font-bold text-foreground uppercase tracking-tight line-clamp-1">
-                          {track.title}
-                        </h4>
-                        <p className="font-mono text-[8px] text-foreground/45 uppercase tracking-widest mt-0.5">
-                          {track.producer}
-                        </p>
+            {/* Column 3 (Scrolls UP) */}
+            <div className="scroll-col-up flex flex-col hidden sm:flex">
+              
+              {/* Group 1 */}
+              <div className="flex flex-col gap-6 pb-6 shrink-0">
+                {[RELEASES[4], RELEASES[5]].map((track) => {
+                  const isThisTrackPlaying = currentTrackId === track.id && isPlaying
+                  return (
+                    <div 
+                      key={`${track.id}-g1`}
+                      className="group relative aspect-[3/4] rounded-xl overflow-hidden border border-white/5 bg-zinc-950/40 shadow-xl transition-all duration-500 hover:scale-[1.03] hover:border-primary/40 hover:shadow-primary/5"
+                    >
+                      <img 
+                        src={track.img} 
+                        alt={track.title} 
+                        className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300" />
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <button
+                          onClick={() => handlePlayClick(track)}
+                          className={`size-12 rounded-full flex items-center justify-center border shadow-xl transition-all duration-300 cursor-pointer ${
+                            isThisTrackPlaying
+                              ? "bg-primary text-primary-foreground border-primary scale-110"
+                              : "bg-black/90 text-foreground border-white/20 hover:border-primary hover:text-primary hover:scale-110"
+                          }`}
+                        >
+                          {isThisTrackPlaying ? <Pause className="size-5 fill-current" /> : <Play className="size-5 fill-current ml-0.5" />}
+                        </button>
                       </div>
-                      
-                      {/* Price / Shopping Badge */}
-                      <button
-                        onClick={() => openLicenseModal(track)}
-                        className="w-full flex items-center justify-center gap-1.5 rounded bg-white/5 hover:bg-primary border border-white/10 hover:border-primary text-foreground hover:text-primary-foreground font-mono text-[9px] tracking-wider font-bold py-2 transition-all cursor-pointer"
-                      >
-                        <ShoppingCart className="size-3" />
-                        COMPRAR {track.price}
-                      </button>
+                      <div className="absolute bottom-0 inset-x-0 p-4 flex flex-col justify-end text-left select-none">
+                        <div>
+                          <h4 className="font-heading text-xs font-bold text-foreground uppercase tracking-tight line-clamp-1">
+                            {track.title}
+                          </h4>
+                          <p className="font-mono text-[8px] text-foreground/45 uppercase tracking-widest mt-0.5">
+                            {track.producer}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => openLicenseModal(track)}
+                          className="w-full flex items-center justify-center gap-1.5 rounded bg-white/5 hover:bg-primary border border-white/10 hover:border-primary text-foreground hover:text-primary-foreground font-mono text-[9px] tracking-wider font-bold py-2 mt-2 transition-all cursor-pointer"
+                        >
+                          COMPRAR {track.price}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
+
+              {/* Group 2 (Duplicate for Seamless Loop) */}
+              <div className="flex flex-col gap-6 pb-6 shrink-0">
+                {[RELEASES[4], RELEASES[5]].map((track) => {
+                  const isThisTrackPlaying = currentTrackId === track.id && isPlaying
+                  return (
+                    <div 
+                      key={`${track.id}-g2`}
+                      className="group relative aspect-[3/4] rounded-xl overflow-hidden border border-white/5 bg-zinc-950/40 shadow-xl transition-all duration-500 hover:scale-[1.03] hover:border-primary/40 hover:shadow-primary/5"
+                    >
+                      <img 
+                        src={track.img} 
+                        alt={track.title} 
+                        className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300" />
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <button
+                          onClick={() => handlePlayClick(track)}
+                          className={`size-12 rounded-full flex items-center justify-center border shadow-xl transition-all duration-300 cursor-pointer ${
+                            isThisTrackPlaying
+                              ? "bg-primary text-primary-foreground border-primary scale-110"
+                              : "bg-black/90 text-foreground border-white/20 hover:border-primary hover:text-primary hover:scale-110"
+                          }`}
+                        >
+                          {isThisTrackPlaying ? <Pause className="size-5 fill-current" /> : <Play className="size-5 fill-current ml-0.5" />}
+                        </button>
+                      </div>
+                      <div className="absolute bottom-0 inset-x-0 p-4 flex flex-col justify-end text-left select-none">
+                        <div>
+                          <h4 className="font-heading text-xs font-bold text-foreground uppercase tracking-tight line-clamp-1">
+                            {track.title}
+                          </h4>
+                          <p className="font-mono text-[8px] text-foreground/45 uppercase tracking-widest mt-0.5">
+                            {track.producer}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => openLicenseModal(track)}
+                          className="w-full flex items-center justify-center gap-1.5 rounded bg-white/5 hover:bg-primary border border-white/10 hover:border-primary text-foreground hover:text-primary-foreground font-mono text-[9px] tracking-wider font-bold py-2 mt-2 transition-all cursor-pointer"
+                        >
+                          COMPRAR {track.price}
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
             </div>
 
           </div>
