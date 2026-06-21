@@ -145,10 +145,7 @@ export function ReleasesSection() {
               SI, ESE BEAT ACABA DE SER DROPEADO.
             </h2>
           </div>
-          
-          <p className="font-mono text-[11px] leading-relaxed tracking-wide text-foreground/60">
-            Los administradores acaban de actualizar el catálogo con ritmos frescos y exclusivos recién salidos de producción. Explora, escucha y adquiere tu licencia exclusiva antes de que lo haga alguien más.
-          </p>
+
 
           <div>
             <button
