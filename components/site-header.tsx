@@ -14,7 +14,7 @@ const NAV = [
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false)
-  const { cart, setCartOpen, purchasedItems, openDownloads } = useCart()
+  const { cart, setCartOpen, purchasedItems, openDownloads, openSearch } = useCart()
 
   return (
     <header className="relative z-30 border-b border-white/5 bg-black/20 backdrop-blur-md">
@@ -59,6 +59,7 @@ export function SiteHeader() {
             START SELLING
           </a>
           <button
+            onClick={() => openSearch()}
             className="flex size-9 items-center justify-center border border-border bg-card/40 text-foreground/80 transition-colors hover:bg-card cursor-pointer"
             aria-label="Buscar"
           >

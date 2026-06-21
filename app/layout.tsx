@@ -7,6 +7,7 @@ import { LicenseModal } from "@/components/license-modal"
 import { CartDrawer } from "@/components/cart-drawer"
 import { PaypalModal } from "@/components/paypal-modal"
 import { DownloadsModal } from "@/components/downloads-modal"
+import { SearchModal } from "@/components/search-modal"
 
 const archivo = Archivo({
   variable: '--font-archivo',
@@ -64,6 +65,7 @@ export default function RootLayout({
           <CartDrawer />
           <PaypalModal />
           <DownloadsModal />
+          <SearchModal />
         </CartProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

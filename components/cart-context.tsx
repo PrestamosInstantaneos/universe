@@ -91,6 +91,171 @@ export const LICENSES: License[] = [
   }
 ]
 
+export const ALL_TRACKS: Track[] = [
+  {
+    id: "1",
+    img: "/images/artist-1.png",
+    title: "Hard melodic free...",
+    producer: "nToucan",
+    tags: ["TRAP", "NEÓN"],
+    bpm: 140,
+    key: "G# Minor",
+    price: "$10.99",
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+    isAd: true
+  },
+  {
+    id: "2",
+    img: "/images/artist-2.png",
+    title: "Lüh rich (Yeat x Ke...",
+    producer: "LokernG",
+    tags: ["R&B"],
+    bpm: 95,
+    key: "C Major",
+    price: "$9.95",
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+    isAd: true
+  },
+  {
+    id: "3",
+    img: "/images/artist-3.png",
+    title: "[FREE] DARK MEL...",
+    producer: "Onibur",
+    tags: ["DRILL", "808"],
+    bpm: 142,
+    key: "D# Minor",
+    price: "$25.00",
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+    isAd: true,
+    hasDownload: true
+  },
+  {
+    id: "4",
+    img: "/images/artist-4.png",
+    title: "200 Beats For $50...",
+    producer: "markk aylin",
+    tags: ["AFROBEATS"],
+    bpm: 110,
+    key: "A Minor",
+    price: "$49.99",
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
+    emoji: "🔥"
+  },
+  {
+    id: "5",
+    img: "/images/artist-5.png",
+    title: "HURRICANE - 1+4 F...",
+    producer: "Gotenkeys",
+    tags: ["WAVE"],
+    bpm: 128,
+    key: "F Minor",
+    price: "$50.00",
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
+    emoji: "🌀",
+    hasDownload: true
+  },
+  {
+    id: "6",
+    img: "/images/artist-6.png",
+    title: "\"Arrest\" | 2+3 FREE | Tra...",
+    producer: "junkey",
+    tags: ["HOUSE"],
+    bpm: 124,
+    key: "A# Minor",
+    price: "$44.95",
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3"
+  },
+  {
+    id: "7",
+    img: "/images/artist-7.png",
+    title: "ICEFIELD BLUE",
+    producer: "FRZN SOUND",
+    tags: ["REGGAETÓN"],
+    bpm: 98,
+    key: "E Minor",
+    price: "$29.99",
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3",
+    hasDownload: true
+  },
+  {
+    id: "8",
+    img: "/images/artist-8.png",
+    title: "POLAR WHITE",
+    producer: "FRZN SOUND",
+    tags: ["BOOM BAP"],
+    bpm: 90,
+    key: "B Minor",
+    price: "$29.99",
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"
+  },
+  {
+    id: "rel-1",
+    img: "/images/artist-7.png",
+    title: "Ghetto Romance",
+    producer: "FRZN SOUND",
+    tags: ["REGGAETÓN", "LATIN"],
+    bpm: 98,
+    key: "E Minor",
+    price: "$29.99",
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3"
+  },
+  {
+    id: "rel-2",
+    img: "/images/artist-2.png",
+    title: "Cyber Trap 2099",
+    producer: "LokernG",
+    tags: ["TRAP", "GLITCH"],
+    bpm: 140,
+    key: "C Minor",
+    price: "$19.99",
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"
+  },
+  {
+    id: "rel-3",
+    img: "/images/artist-4.png",
+    title: "Afro Chill Vibes",
+    producer: "Markk Aylin",
+    tags: ["AFROBEATS", "DANCEHALL"],
+    bpm: 105,
+    key: "G Major",
+    price: "$39.99",
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3"
+  },
+  {
+    id: "rel-4",
+    img: "/images/artist-3.png",
+    title: "Drill Symphony",
+    producer: "Onibur",
+    tags: ["DRILL", "DARK"],
+    bpm: 144,
+    key: "D# Minor",
+    price: "$24.99",
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"
+  },
+  {
+    id: "rel-5",
+    img: "/images/artist-6.png",
+    title: "Midnight House",
+    producer: "Junkey",
+    tags: ["HOUSE", "DEEP"],
+    bpm: 126,
+    key: "A Minor",
+    price: "$44.99",
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3"
+  },
+  {
+    id: "rel-6",
+    img: "/images/artist-8.png",
+    title: "Polar Express",
+    producer: "FRZN SOUND",
+    tags: ["BOOM BAP", "CLASSIC"],
+    bpm: 92,
+    key: "E Minor",
+    price: "$29.99",
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"
+  }
+]
+
 type CartContextType = {
   cart: CartItem[]
   licenseModalTrack: Track | null
@@ -101,6 +266,16 @@ type CartContextType = {
   paypalState: 'login' | 'review' | 'processing' | 'success'
   purchasedItems: CartItem[]
   isDownloadsOpen: boolean
+  // Search state & actions
+  isSearchOpen: boolean
+  searchQuery: string
+  searchSelectedTags: string[]
+  openSearch: (initialTag?: string) => void
+  closeSearch: () => void
+  toggleSearchTag: (tag: string) => void
+  setSearchQuery: (query: string) => void
+  clearSearchFilters: () => void
+  // Cart Actions
   openLicenseModal: (track: Track, defaultLicense?: LicenseType, cartId?: string | null) => void
   closeLicenseModal: () => void
   addToCart: (track: Track, licenseType: LicenseType) => void
@@ -129,6 +304,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [purchasedItems, setPurchasedItems] = useState<CartItem[]>([])
   const [isDownloadsOpen, setIsDownloadsOpen] = useState(false)
 
+  // Search States
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [searchSelectedTags, setSearchSelectedTags] = useState<string[]>([])
+
   // Cargar estado inicial desde localStorage si es posible
   useEffect(() => {
     const savedCart = localStorage.getItem("frzn_cart")
@@ -153,6 +333,36 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const saveCartToStorage = (newCart: CartItem[]) => {
     setCart(newCart)
     localStorage.setItem("frzn_cart", JSON.stringify(newCart))
+  }
+
+  const openSearch = (initialTag?: string) => {
+    setSearchQuery("")
+    if (initialTag) {
+      setSearchSelectedTags([initialTag.toUpperCase()])
+    } else {
+      setSearchSelectedTags([])
+    }
+    setIsSearchOpen(true)
+  }
+
+  const closeSearch = () => {
+    setIsSearchOpen(false)
+    setSearchQuery("")
+    setSearchSelectedTags([])
+  }
+
+  const toggleSearchTag = (tag: string) => {
+    const formattedTag = tag.toUpperCase()
+    if (searchSelectedTags.includes(formattedTag)) {
+      setSearchSelectedTags(searchSelectedTags.filter(t => t !== formattedTag))
+    } else {
+      setSearchSelectedTags([...searchSelectedTags, formattedTag])
+    }
+  }
+
+  const clearSearchFilters = () => {
+    setSearchQuery("")
+    setSearchSelectedTags([])
   }
 
   const openLicenseModal = (
@@ -279,6 +489,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       paypalState,
       purchasedItems,
       isDownloadsOpen,
+      // Search Context values
+      isSearchOpen,
+      searchQuery,
+      searchSelectedTags,
+      openSearch,
+      closeSearch,
+      toggleSearchTag,
+      setSearchQuery,
+      clearSearchFilters,
+      // Cart Actions
       openLicenseModal,
       closeLicenseModal,
       addToCart,
