@@ -2,6 +2,11 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Archivo, Geist_Mono } from 'next/font/google'
 import './globals.css'
+import { CartProvider } from "@/components/cart-context"
+import { LicenseModal } from "@/components/license-modal"
+import { CartDrawer } from "@/components/cart-drawer"
+import { PaypalModal } from "@/components/paypal-modal"
+import { DownloadsModal } from "@/components/downloads-modal"
 
 const archivo = Archivo({
   variable: '--font-archivo',
@@ -53,7 +58,13 @@ export default function RootLayout({
       className={`${archivo.variable} ${geistMono.variable} bg-background`}
     >
       <body className="font-sans antialiased">
-        {children}
+        <CartProvider>
+          {children}
+          <LicenseModal />
+          <CartDrawer />
+          <PaypalModal />
+          <DownloadsModal />
+        </CartProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

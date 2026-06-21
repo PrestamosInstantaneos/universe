@@ -2,18 +2,11 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, ShoppingCart, Music } from "lucide-react"
-
-type TrackData = {
-  id: string
-  title: string
-  producer: string
-  img: string
-  audioUrl: string
-  price: string
-}
+import { useCart, Track } from "./cart-context"
 
 export function AudioPlayer() {
-  const [track, setTrack] = useState<TrackData | null>(null)
+  const { openLicenseModal } = useCart()
+  const [track, setTrack] = useState<Track | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [duration, setDuration] = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
@@ -28,7 +21,7 @@ export function AudioPlayer() {
     const handlePlayTrack = (e: Event) => {
       const customEvent = e as CustomEvent
       if (customEvent.detail) {
-        const newTrack = customEvent.detail as TrackData
+        const newTrack = customEvent.detail as Track
         setTrack(newTrack)
         setIsPlaying(true)
         
@@ -161,11 +154,8 @@ export function AudioPlayer() {
             </p>
           </div>
           <button 
-            className="flex items-center gap-1.5 shrink-0 rounded bg-primary/10 border border-primary/20 hover:bg-primary hover:text-primary-foreground text-primary font-mono text-[9px] tracking-widest font-bold px-3 py-1.5 transition-all"
-            onClick={() => {
-              const event = new CustomEvent("add-to-cart", { detail: track })
-              window.dispatchEvent(event)
-            }}
+            className="flex items-center gap-1.5 shrink-0 rounded bg-primary/10 border border-primary/20 hover:bg-primary hover:text-primary-foreground text-primary font-mono text-[9px] tracking-widest font-bold px-3 py-1.5 transition-all cursor-pointer"
+            onClick={() => openLicenseModal(track)}
           >
             <ShoppingCart className="size-3" />
             {track.price}

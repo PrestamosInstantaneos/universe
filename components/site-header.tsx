@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Menu, X, Search, ShoppingBag } from "lucide-react"
+import { useCart } from "./cart-context"
 
 const NAV = [
   { label: "FEED", char: "↘" },
@@ -13,6 +14,7 @@ const NAV = [
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false)
+  const { cart, setCartOpen, purchasedItems, openDownloads } = useCart()
 
   return (
     <header className="relative z-30 border-b border-white/5 bg-black/20 backdrop-blur-md">
@@ -42,6 +44,14 @@ export function SiteHeader() {
 
         {/* Right icons */}
         <div className="flex items-center gap-3">
+          {purchasedItems.length > 0 && (
+            <button
+              onClick={openDownloads}
+              className="inline-flex items-center justify-center gap-1.5 border border-emerald-500 bg-emerald-500/10 hover:bg-emerald-500 hover:text-zinc-950 text-emerald-400 font-mono text-[9px] tracking-[0.12em] font-bold px-3 py-2 transition-all cursor-pointer rounded-sm"
+            >
+              MIS DESCARGAS
+            </button>
+          )}
           <a
             href="#"
             className="hidden sm:inline-flex items-center justify-center border border-primary bg-primary/10 hover:bg-primary hover:text-primary-foreground text-primary font-mono text-[10px] tracking-[0.15em] font-bold px-4.5 py-2 transition-all"
@@ -49,19 +59,25 @@ export function SiteHeader() {
             START SELLING
           </a>
           <button
-            className="flex size-9 items-center justify-center border border-border bg-card/40 text-foreground/80 transition-colors hover:bg-card"
+            className="flex size-9 items-center justify-center border border-border bg-card/40 text-foreground/80 transition-colors hover:bg-card cursor-pointer"
             aria-label="Buscar"
           >
             <Search className="size-4" />
           </button>
           <button
-            className="flex size-9 items-center justify-center border border-border bg-card/40 text-foreground/80 transition-colors hover:bg-card"
+            onClick={() => setCartOpen(true)}
+            className="relative flex size-9 items-center justify-center border border-border bg-card/40 text-foreground/80 transition-colors hover:bg-card cursor-pointer"
             aria-label="Carrito"
           >
             <ShoppingBag className="size-4" />
+            {cart.length > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 flex size-4.5 items-center justify-center rounded-full bg-primary text-[8px] font-mono font-bold text-primary-foreground border border-background shadow-lg">
+                {cart.length}
+              </span>
+            )}
           </button>
           <button
-            className="flex size-9 items-center justify-center border border-border bg-card/40 text-foreground/80 transition-colors hover:bg-card lg:hidden"
+            className="flex size-9 items-center justify-center border border-border bg-card/40 text-foreground/80 transition-colors hover:bg-card lg:hidden cursor-pointer"
             aria-label={open ? "Cerrar menú" : "Abrir menú"}
             onClick={() => setOpen((v) => !v)}
           >

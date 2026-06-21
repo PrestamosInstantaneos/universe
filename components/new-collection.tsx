@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Play, Pause, ShoppingCart, Music, Layers, Disc, Download, ChevronLeft, ChevronRight } from "lucide-react"
+import { useCart } from "./cart-context"
 
 type Track = {
   id: string
@@ -121,6 +122,7 @@ const TRIPLED_TRACKS = [...TRACKS, ...TRACKS, ...TRACKS]
 
 
 export function NewCollection() {
+  const { openLicenseModal } = useCart()
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null)
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
 
@@ -315,14 +317,7 @@ export function NewCollection() {
     } else {
       // Cargar y reproducir un nuevo track
       const event = new CustomEvent("play-track", {
-        detail: {
-          id: track.id,
-          title: track.title,
-          producer: track.producer,
-          img: track.img,
-          audioUrl: track.audioUrl,
-          price: track.price
-        }
+        detail: track
       })
       window.dispatchEvent(event)
     }
@@ -429,11 +424,8 @@ export function NewCollection() {
                 {/* Botón de compra / precio y descarga */}
                 <div className="mt-4 flex items-center gap-2">
                   <button
-                    onClick={() => {
-                      const event = new CustomEvent("add-to-cart", { detail: track })
-                      window.dispatchEvent(event)
-                    }}
-                    className="flex-1 flex items-center justify-center gap-1.5 rounded border border-primary/30 bg-primary/5 hover:bg-primary hover:text-primary-foreground text-primary font-mono text-[10px] tracking-widest font-bold py-2.5 transition-all"
+                    onClick={() => openLicenseModal(track)}
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded border border-primary/30 bg-primary/5 hover:bg-primary hover:text-primary-foreground text-primary font-mono text-[10px] tracking-widest font-bold py-2.5 transition-all cursor-pointer"
                   >
                     <ShoppingCart className="size-3" />
                     {track.price}
