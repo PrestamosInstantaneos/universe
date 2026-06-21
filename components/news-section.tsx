@@ -25,7 +25,7 @@ const NEWS_POSTS: Post[] = [
     tagColor: "text-primary border-primary/30 bg-primary/5",
     summary: "El catálogo se ha actualizado con nuevos ritmos de trap y R&B. Escucha los adelantos exclusivos en la sección de drops.",
     content: "Nuestros administradores acaban de publicar un lote de 15 instrumentales exclusivos con enfoque melódico, ideales para voces R&B y trap agresivo. Además, se han ajustado los contratos de la licencia Unlimited para otorgar un 10% adicional de regalías en favor del artista en plataformas de streaming. ¡No te pierdas estos nuevos beats e impulsa tu siguiente lanzamiento hoy mismo!",
-    image: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600&auto=format&fit=crop&q=80",
+    image: "/images/featured.png",
     author: "FRZN Admin",
     readTime: "2 min de lectura"
   },
@@ -37,7 +37,7 @@ const NEWS_POSTS: Post[] = [
     tagColor: "text-emerald-400 border-emerald-500/30 bg-emerald-500/5",
     summary: "Añade dos beats con la misma licencia a tu carrito y el descuento se aplicará automáticamente al pagar.",
     content: "Queremos apoyar a los artistas independientes este mes. Al añadir cualquier par de beats de la misma categoría de licencia (Basic o Premium) a tu carrito de compras, el sistema de FRZN descontará automáticamente el de menor valor. Esta oferta especial estará activa por tiempo limitado y finalizará el 30 de junio. ¡Aprovecha para armar tus maquetas!",
-    image: "https://images.unsplash.com/photo-1516280440614-37939bbacd6a?w=600&auto=format&fit=crop&q=80",
+    image: "/images/city-banner.png",
     author: "Marketing FRZN",
     readTime: "3 min de lectura"
   },
@@ -49,7 +49,7 @@ const NEWS_POSTS: Post[] = [
     tagColor: "text-sky-400 border-sky-500/30 bg-sky-500/5",
     summary: "Una guía rápida paso a paso sobre cómo registrar tus canciones en BMI/ASCAP utilizando la licencia exclusiva de FRZN.",
     content: "Comprar un beat es solo el primer paso en tu carrera musical. En este post de ayuda, te explicamos detalladamente cómo debes rellenar los datos de escritor y editor al registrar tu tema en sociedades de gestión de derechos de autor (como BMI, ASCAP o SCD). Desglosamos las diferencias clave sobre las cláusulas de regalías contenidas en tu licencia digital para que no tengas ningún inconveniente al monetizar tus pistas en plataformas de streaming como YouTube o Spotify.",
-    image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&auto=format&fit=crop&q=80",
+    image: "/images/hero-thumb-2.png",
     author: "Soporte FRZN",
     readTime: "5 min de lectura"
   }
