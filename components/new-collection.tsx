@@ -329,6 +329,34 @@ export function NewCollection() {
       
       {/* SECCIÓN DE BEATS (RULETA DE PASOS) */}
       <div className="space-y-6">
+        <style>{`
+          .trending-card-wrapper {
+            background-image: linear-gradient(#18181b, #18181b), linear-gradient(120deg, rgba(34, 211, 238, 0.35), rgba(236, 72, 153, 0.35), rgba(139, 92, 246, 0.35), rgba(34, 211, 238, 0.35));
+            background-origin: border-box;
+            background-clip: content-box, border-box;
+            border: 2px solid transparent;
+            background-size: 100% 100%, 300% 300%;
+            animation: border-flow 6s ease infinite;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 5px rgba(236, 72, 153, 0.15), 0 0 8px rgba(34, 211, 238, 0.12);
+            transition: all 0.4s ease-in-out;
+          }
+          .trending-card-wrapper:hover {
+            background-image: linear-gradient(#09090b, #09090b), linear-gradient(120deg, #22d3ee, #d946ef, #8b5cf6, #22d3ee);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 15px rgba(236, 72, 153, 0.65), 0 0 25px rgba(34, 211, 238, 0.5);
+            transform: scale(1.02);
+          }
+          @keyframes border-flow {
+            0% {
+              background-position: 0% 50%, 0% 50%;
+            }
+            50% {
+              background-position: 0% 50%, 100% 50%;
+            }
+            100% {
+              background-position: 0% 50%, 0% 50%;
+            }
+          }
+        `}</style>
         <div className="border-b border-white/10 pb-4">
           <span className="font-mono text-[10px] tracking-[0.25em] text-primary uppercase">[ 01 ]</span>
           <h2 className="font-heading text-2xl font-black tracking-[-0.02em] text-foreground sm:text-3xl md:text-4xl mt-1 uppercase">
@@ -357,7 +385,7 @@ export function NewCollection() {
             return (
               <article 
                 key={`${track.id}-${index}`}
-                className="group flex flex-col w-[220px] shrink-0 bg-zinc-900/30 border border-white/5 hover:border-primary/30 rounded-lg p-4 transition-all duration-300 hover:scale-[1.02] hover:bg-zinc-900/50"
+                className="group flex flex-col w-[220px] shrink-0 rounded-lg p-4 trending-card-wrapper"
               >
                 {/* Numeración superior de la tarjeta */}
                 <div className="flex justify-between items-center mb-3">
