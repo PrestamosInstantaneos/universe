@@ -1,6 +1,7 @@
 import { SiteHeader } from "@/components/site-header"
 import { HeroSection } from "@/components/hero-section"
 import { NewCollection } from "@/components/new-collection"
+import { ReleasesSection } from "@/components/releases-section"
 import { ManifestoSection } from "@/components/manifesto-section"
 import { SiteFooter } from "@/components/site-footer"
 import { AudioPlayer } from "@/components/audio-player"
@@ -11,6 +12,7 @@ export default function Page() {
       <SiteHeader />
       <HeroSection />
       <NewCollection />
+      <ReleasesSection />
       <ManifestoSection />
       <SiteFooter />
       <AudioPlayer />
