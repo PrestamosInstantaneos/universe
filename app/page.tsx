@@ -13,8 +13,8 @@ export default function Page() {
       <SiteHeader />
       <HeroSection />
       <NewCollection />
-      <PopularGenres />
       <ReleasesSection />
+      <PopularGenres />
       <ManifestoSection />
       <SiteFooter />
       <AudioPlayer />

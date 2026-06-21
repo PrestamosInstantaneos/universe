@@ -67,7 +67,7 @@ export function PopularGenres() {
         <div>
           <span className="font-mono text-[9px] tracking-[0.25em] text-primary uppercase font-bold">[ 02 ]</span>
           <h2 className="font-heading text-xl sm:text-2xl font-black tracking-[-0.02em] text-foreground mt-1 uppercase">
-            Géneros Populares (Popular Genres)
+            Géneros Populares
           </h2>
         </div>
         
