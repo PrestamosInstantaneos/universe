@@ -61,9 +61,21 @@ export function SiteHeader() {
             auto_select: false,
           })
 
-          const container = document.getElementById("google-login-btn")
-          if (container) {
-            window.google.accounts.id.renderButton(container, {
+          // 1. Botón de Escritorio (Solo icono G, circular)
+          const desktopContainer = document.getElementById("google-login-btn-desktop")
+          if (desktopContainer) {
+            window.google.accounts.id.renderButton(desktopContainer, {
+              type: "icon",
+              theme: "filled_black",
+              shape: "circle",
+              size: "medium",
+            })
+          }
+
+          // 2. Botón Móvil (Dentro del menú hamburguesa, completo)
+          const mobileContainer = document.getElementById("google-login-btn-mobile")
+          if (mobileContainer) {
+            window.google.accounts.id.renderButton(mobileContainer, {
               theme: "filled_black",
               size: "medium",
               shape: "rectangular",
@@ -85,7 +97,7 @@ export function SiteHeader() {
     return () => {
       if (timer) clearTimeout(timer)
     }
-  }, [user, gsiLoaded, mounted])
+  }, [user, gsiLoaded, mounted, open]) // Re-inicializar si cambia el estado del menú hamburguesa
 
   return (
     <header className="relative z-30 border-b border-white/5 bg-black/20 backdrop-blur-md">
@@ -160,13 +172,14 @@ export function SiteHeader() {
                 </div>
               </div>
             ) : (
+              /* Desktop/Laptop only: Compact circular Google G-logo button */
               <div 
-                className="flex h-[32px] items-center justify-center border border-primary/30 bg-black/40 rounded-sm hover:border-primary transition-all overflow-hidden"
+                className="hidden sm:flex h-[32px] w-[32px] items-center justify-center border border-primary/30 bg-black/40 rounded-full hover:border-primary transition-all overflow-hidden"
                 style={{ colorScheme: "light" }}
               >
                 <div 
-                  id="google-login-btn" 
-                  className="h-[32px] flex items-center bg-transparent [&_iframe]:!bg-transparent [&_iframe]:!border-none [&_div]:!bg-transparent"
+                  id="google-login-btn-desktop" 
+                  className="h-[32px] w-[32px] flex items-center justify-center bg-transparent [&_iframe]:!bg-transparent [&_iframe]:!border-none"
                 ></div>
               </div>
             )
@@ -221,6 +234,24 @@ export function SiteHeader() {
                 </a>
               </li>
             ))}
+
+            {/* Google Sign-in Option inside the mobile menu drawer */}
+            {!user && (
+              <li className="mt-4 pt-4 border-t border-white/5 flex flex-col items-center justify-center gap-2">
+                <span className="font-mono text-[9px] tracking-[0.15em] text-foreground/40 uppercase">
+                  INGRESAR A TU CUENTA:
+                </span>
+                <div 
+                  className="flex h-[36px] w-[200px] items-center justify-center border border-primary/30 bg-black/40 rounded-sm hover:border-primary transition-all overflow-hidden"
+                  style={{ colorScheme: "light" }}
+                >
+                  <div 
+                    id="google-login-btn-mobile" 
+                    className="h-[32px] flex items-center bg-transparent [&_iframe]:!bg-transparent [&_iframe]:!border-none [&_div]:!bg-transparent"
+                  ></div>
+                </div>
+              </li>
+            )}
           </ul>
         </nav>
       )}
