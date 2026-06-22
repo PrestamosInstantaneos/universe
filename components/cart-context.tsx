@@ -273,6 +273,11 @@ type CartContextType = {
   paypalState: 'login' | 'review' | 'processing' | 'success'
   purchasedItems: CartItem[]
   isDownloadsOpen: boolean
+  // Dynamic Catalog
+  tracks: Track[]
+  releases: Track[]
+  allTracks: Track[]
+  refreshCatalog: () => Promise<void>
   // User Authentication
   user: GoogleUser | null
   isLoadingUser: boolean
@@ -325,6 +330,45 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<GoogleUser | null>(null)
   const [isLoadingUser, setIsLoadingUser] = useState(false)
 
+  // Dynamic Catalog States
+  const [tracks, setTracks] = useState<Track[]>(() => ALL_TRACKS.filter(t => !t.id.startsWith("rel-")))
+  const [releases, setReleases] = useState<Track[]>(() => ALL_TRACKS.filter(t => t.id.startsWith("rel-")))
+
+  const refreshCatalog = async () => {
+    try {
+      const appsScriptUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL
+      if (!appsScriptUrl) {
+        console.warn("NEXT_PUBLIC_APPS_SCRIPT_URL is not defined")
+        return
+      }
+      const response = await fetch(`${appsScriptUrl}?action=getTracks`)
+      const result = await response.json()
+      if (result.status === "success" && Array.isArray(result.tracks)) {
+        // Merge fetched tracks with ALL_TRACKS to preserve local metadata/ads/emojis
+        const trackMap = new Map<string, Track>()
+        ALL_TRACKS.forEach(t => trackMap.set(t.id, t))
+        
+        result.tracks.forEach((t: Track) => {
+          trackMap.set(t.id, {
+            ...trackMap.get(t.id),
+            ...t
+          })
+        })
+        
+        const combined = Array.from(trackMap.values())
+        setTracks(combined.filter(t => !t.id.startsWith("rel-")))
+        setReleases(combined.filter(t => t.id.startsWith("rel-")))
+      }
+    } catch (e) {
+      console.error("Error fetching catalog:", e)
+    }
+  }
+
+  // Fetch catalog on mount
+  useEffect(() => {
+    refreshCatalog()
+  }, [])
+
   // Cargar estado inicial desde localStorage si es posible
   useEffect(() => {
     const savedCart = localStorage.getItem("frzn_cart")
@@ -368,7 +412,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         (lItem) => lItem.track.id === sItem.trackId && lItem.licenseType === sItem.licenseType
       )
       if (!exists) {
-        const fullTrack = ALL_TRACKS.find(t => t.id === sItem.trackId)
+        const fullTrack = [...tracks, ...releases].find(t => t.id === sItem.trackId) || ALL_TRACKS.find(t => t.id === sItem.trackId)
         if (fullTrack) {
           merged.push({
             cartId: `${sItem.trackId}-${sItem.licenseType}-${Date.now()}`,
@@ -626,6 +670,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       paypalState,
       purchasedItems,
       isDownloadsOpen,
+      // Dynamic Catalog
+      tracks,
+      releases,
+      allTracks: [...tracks, ...releases],
+      refreshCatalog,
       // User Authentication
       user,
       isLoadingUser,

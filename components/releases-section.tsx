@@ -74,9 +74,14 @@ const RELEASES: Track[] = [
 ]
 
 export function ReleasesSection() {
-  const { openLicenseModal } = useCart()
+  const { releases, openLicenseModal } = useCart()
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null)
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
+
+  // Safe helper to get releases or fallbacks
+  const col1Tracks = [releases[0] || RELEASES[0], releases[1] || RELEASES[1]].filter(Boolean)
+  const col2Tracks = [releases[2] || RELEASES[2], releases[3] || RELEASES[3]].filter(Boolean)
+  const col3Tracks = [releases[4] || RELEASES[4], releases[5] || RELEASES[5]].filter(Boolean)
 
   // Escuchar el estado de reproducción del reproductor de audio global
   useEffect(() => {
@@ -181,7 +186,7 @@ export function ReleasesSection() {
               
               {/* Group 1 */}
               <div className="flex flex-col gap-6 pb-6 shrink-0">
-                {[RELEASES[0], RELEASES[1]].map((track) => {
+                {col1Tracks.map((track) => {
                   const isThisTrackPlaying = currentTrackId === track.id && isPlaying
                   return (
                     <div 
@@ -229,7 +234,7 @@ export function ReleasesSection() {
 
               {/* Group 2 (Duplicate for Seamless Loop) */}
               <div className="flex flex-col gap-6 pb-6 shrink-0">
-                {[RELEASES[0], RELEASES[1]].map((track) => {
+                {col1Tracks.map((track) => {
                   const isThisTrackPlaying = currentTrackId === track.id && isPlaying
                   return (
                     <div 
@@ -282,7 +287,7 @@ export function ReleasesSection() {
               
               {/* Group 1 */}
               <div className="flex flex-col gap-6 pb-6 shrink-0">
-                {[RELEASES[2], RELEASES[3]].map((track) => {
+                {col2Tracks.map((track) => {
                   const isThisTrackPlaying = currentTrackId === track.id && isPlaying
                   return (
                     <div 
@@ -330,7 +335,7 @@ export function ReleasesSection() {
 
               {/* Group 2 (Duplicate for Seamless Loop) */}
               <div className="flex flex-col gap-6 pb-6 shrink-0">
-                {[RELEASES[2], RELEASES[3]].map((track) => {
+                {col2Tracks.map((track) => {
                   const isThisTrackPlaying = currentTrackId === track.id && isPlaying
                   return (
                     <div 
@@ -383,7 +388,7 @@ export function ReleasesSection() {
               
               {/* Group 1 */}
               <div className="flex flex-col gap-6 pb-6 shrink-0">
-                {[RELEASES[4], RELEASES[5]].map((track) => {
+                {col3Tracks.map((track) => {
                   const isThisTrackPlaying = currentTrackId === track.id && isPlaying
                   return (
                     <div 
@@ -431,7 +436,7 @@ export function ReleasesSection() {
 
               {/* Group 2 (Duplicate for Seamless Loop) */}
               <div className="flex flex-col gap-6 pb-6 shrink-0">
-                {[RELEASES[4], RELEASES[5]].map((track) => {
+                {col3Tracks.map((track) => {
                   const isThisTrackPlaying = currentTrackId === track.id && isPlaying
                   return (
                     <div 

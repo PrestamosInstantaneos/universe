@@ -2,127 +2,12 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Play, Pause, ShoppingCart, Music, Layers, Disc, Download, ChevronLeft, ChevronRight } from "lucide-react"
-import { useCart } from "./cart-context"
-
-type Track = {
-  id: string
-  img: string
-  title: string
-  producer: string
-  tags: string[]
-  bpm: number
-  key: string
-  price: string
-  audioUrl: string
-  isAd?: boolean
-  hasDownload?: boolean
-  emoji?: string
-}
-
-const TRACKS: Track[] = [
-  {
-    id: "1",
-    img: "/images/artist-1.png",
-    title: "Hard melodic free...",
-    producer: "nToucan",
-    tags: ["TRAP", "NEÓN"],
-    bpm: 140,
-    key: "G# Minor",
-    price: "$10.99",
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-    isAd: true
-  },
-  {
-    id: "2",
-    img: "/images/artist-2.png",
-    title: "Lüh rich (Yeat x Ke...",
-    producer: "LokernG",
-    tags: ["R&B"],
-    bpm: 95,
-    key: "C Major",
-    price: "$9.95",
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-    isAd: true
-  },
-  {
-    id: "3",
-    img: "/images/artist-3.png",
-    title: "[FREE] DARK MEL...",
-    producer: "Onibur",
-    tags: ["DRILL", "808"],
-    bpm: 142,
-    key: "D# Minor",
-    price: "$25.00",
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-    isAd: true,
-    hasDownload: true
-  },
-  {
-    id: "4",
-    img: "/images/artist-4.png",
-    title: "200 Beats For $50...",
-    producer: "markk aylin",
-    tags: ["AFROBEATS"],
-    bpm: 110,
-    key: "A Minor",
-    price: "$49.99",
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
-    emoji: "🔥"
-  },
-  {
-    id: "5",
-    img: "/images/artist-5.png",
-    title: "HURRICANE - 1+4 F...",
-    producer: "Gotenkeys",
-    tags: ["WAVE"],
-    bpm: 128,
-    key: "F Minor",
-    price: "$50.00",
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
-    emoji: "🌀",
-    hasDownload: true
-  },
-  {
-    id: "6",
-    img: "/images/artist-6.png",
-    title: "\"Arrest\" | 2+3 FREE | Tra...",
-    producer: "junkey",
-    tags: ["HOUSE"],
-    bpm: 124,
-    key: "A# Minor",
-    price: "$44.95",
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3"
-  },
-  {
-    id: "7",
-    img: "/images/artist-7.png",
-    title: "ICEFIELD BLUE",
-    producer: "FRZN SOUND",
-    tags: ["REGGAETÓN"],
-    bpm: 98,
-    key: "E Minor",
-    price: "$29.99",
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3",
-    hasDownload: true
-  },
-  {
-    id: "8",
-    img: "/images/artist-8.png",
-    title: "POLAR WHITE",
-    producer: "FRZN SOUND",
-    tags: ["BOOM BAP"],
-    bpm: 90,
-    key: "B Minor",
-    price: "$29.99",
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"
-  }
-]
-
-const TRIPLED_TRACKS = [...TRACKS, ...TRACKS, ...TRACKS]
-
+import { useCart, Track } from "./cart-context"
 
 export function NewCollection() {
-  const { openLicenseModal } = useCart()
+  const { tracks, openLicenseModal } = useCart()
+  const tripledTracks = [...tracks, ...tracks, ...tracks]
+  
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null)
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
 
@@ -161,24 +46,24 @@ export function NewCollection() {
   // Inicializar scrollLeft al centro (en la segunda tanda de 3) para permitir loop infinito bidireccional
   useEffect(() => {
     const container = scrollRef.current
-    if (!container) return
+    if (!container || tracks.length === 0) return
     
     // Esperar a que rendericen las tarjetas
     const initScroll = () => {
-      const originalWidth = TRACKS.length * 244
+      const originalWidth = tracks.length * 244
       container.scrollLeft = originalWidth
     }
 
     // Retraso mínimo para asegurar el render inicial de las portadas
     const timer = setTimeout(initScroll, 50)
     return () => clearTimeout(timer)
-  }, [])
+  }, [tracks])
 
   // Lógica de loop infinito al hacer scroll manual o drag
   const handleScroll = () => {
     const container = scrollRef.current
-    if (!container) return
-    const originalWidth = TRACKS.length * 244
+    if (!container || tracks.length === 0) return
+    const originalWidth = tracks.length * 244
 
     // Si pasamos del final de la segunda tanda, volvemos a la primera tanda
     if (container.scrollLeft >= originalWidth * 2) {
@@ -193,10 +78,10 @@ export function NewCollection() {
   // Autoplay continuo de derecha a izquierda (loop infinito lento)
   useEffect(() => {
     const container = scrollRef.current
-    if (!container) return
+    if (!container || tracks.length === 0) return
 
     let animationFrameId: number
-    const originalWidth = TRACKS.length * 244
+    const originalWidth = tracks.length * 244
 
     const step = () => {
       // Avanzar lentamente hacia la izquierda si no hay interferencia del usuario
@@ -214,7 +99,7 @@ export function NewCollection() {
     return () => {
       cancelAnimationFrame(animationFrameId)
     }
-  }, [isPaused, isHovering, isDraggingContainer])
+  }, [isPaused, isHovering, isDraggingContainer, tracks])
 
   // Drag del Contenedor del Carrusel (Arrastre de Mouse en Desktop)
   const handleContainerMouseDown = (e: React.MouseEvent) => {
@@ -352,7 +237,7 @@ export function NewCollection() {
             cursor: isDraggingContainer ? "grabbing" : "grab"
           }}
         >
-          {TRIPLED_TRACKS.map((track, index) => {
+          {tracks.length > 0 && tripledTracks.map((track, index) => {
             const isThisTrackPlaying = currentTrackId === track.id && isPlaying
             return (
               <article 
@@ -362,7 +247,7 @@ export function NewCollection() {
                 {/* Numeración superior de la tarjeta */}
                 <div className="flex justify-between items-center mb-3">
                   <span className="font-mono text-[10px] font-bold text-primary/80">
-                    {((index % TRACKS.length) + 1).toString().padStart(2, '0')} / {TRACKS.length.toString().padStart(2, '0')}
+                    {((index % tracks.length) + 1).toString().padStart(2, '0')} / {tracks.length.toString().padStart(2, '0')}
                   </span>
                   {track.isAd && (
                     <span className="bg-foreground/10 text-foreground/45 text-[7px] font-mono font-bold px-1 py-0.5 rounded leading-none">
