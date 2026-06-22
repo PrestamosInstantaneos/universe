@@ -160,8 +160,11 @@ export function SiteHeader() {
                 </div>
               </div>
             ) : (
-              <div className="flex h-[36px] items-center justify-center border border-primary/30 bg-black/40 px-2 rounded-sm hover:border-primary transition-all">
-                <div id="google-login-btn" className="h-[28px] flex items-center"></div>
+              <div className="flex h-[36px] items-center justify-center border border-primary/30 bg-black/40 px-2 rounded-sm hover:border-primary transition-all overflow-hidden">
+                <div 
+                  id="google-login-btn" 
+                  className="h-[28px] flex items-center bg-transparent [&_iframe]:!bg-transparent [&_iframe]:!border-none [&_div]:!bg-transparent"
+                ></div>
               </div>
             )
           )}

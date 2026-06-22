@@ -186,3 +186,14 @@
     transform-origin: center right;
   }
 }
+
+/* Quitar fondos y bordes de la iframe de inicio de sesión de Google */
+#google-login-btn,
+#google-login-btn iframe,
+#google-login-btn div {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color-scheme: dark !important;
+}
