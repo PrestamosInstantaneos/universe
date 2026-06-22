@@ -35,6 +35,8 @@ export function SiteHeader() {
     logoutUser
   } = useCart()
 
+  const isAdmin = user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL || user?.email === "music.bests.page.is@gmail.com"
+
   // Evitar desajustes de hidratación en Next.js
   useEffect(() => {
     setMounted(true)
@@ -136,6 +138,15 @@ export function SiteHeader() {
 
         {/* Right icons */}
         <div className="flex items-center gap-3">
+          {mounted && isAdmin && (
+            <a
+              href="/admin"
+              className="inline-flex items-center justify-center gap-1.5 border border-primary/40 bg-primary/10 hover:bg-primary hover:text-primary-foreground text-primary font-mono text-[9px] tracking-[0.12em] font-bold px-3 py-2 transition-all cursor-pointer rounded-sm shadow-sm hover:shadow-primary/20"
+            >
+              ADMINISTRACIÓN
+            </a>
+          )}
+
           {purchasedItems.length > 0 && (
             <button
               onClick={openDownloads}
@@ -238,6 +249,19 @@ export function SiteHeader() {
                 </a>
               </li>
             ))}
+
+            {mounted && isAdmin && (
+              <li>
+                <a
+                  href="/admin"
+                  className="flex items-center justify-between border-b border-primary/30 py-3 font-mono text-xs tracking-[0.18em] text-primary hover:text-primary-light font-bold"
+                  onClick={() => setOpen(false)}
+                >
+                  ADMINISTRACIÓN
+                  <span className="text-primary/70">↗</span>
+                </a>
+              </li>
+            )}
 
             {/* Google Sign-in Option inside the mobile menu drawer */}
             {!user && (
