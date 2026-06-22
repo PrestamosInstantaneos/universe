@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Menu, X, Search, ShoppingBag } from "lucide-react"
 import { useCart } from "./cart-context"
 import Script from "next/script"
@@ -23,6 +23,7 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [gsiLoaded, setGsiLoaded] = useState(false)
+  const googleInitializedRef = useRef(false)
   const { 
     cart, 
     setCartOpen, 
@@ -51,15 +52,18 @@ export function SiteHeader() {
 
       if (typeof window !== "undefined" && window.google && !user) {
         try {
-          window.google.accounts.id.initialize({
-            client_id: clientId,
-            callback: async (response: any) => {
-              if (response.credential) {
-                await loginUser(response.credential)
-              }
-            },
-            auto_select: false,
-          })
+          if (!googleInitializedRef.current) {
+            window.google.accounts.id.initialize({
+              client_id: clientId,
+              callback: async (response: any) => {
+                if (response.credential) {
+                  await loginUser(response.credential)
+                }
+              },
+              auto_select: false,
+            })
+            googleInitializedRef.current = true
+          }
 
           // 1. Botón de Escritorio (Solo icono G, circular)
           const desktopContainer = document.getElementById("google-login-btn-desktop")
