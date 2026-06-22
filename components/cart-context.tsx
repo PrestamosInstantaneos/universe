@@ -35,6 +35,13 @@ export type CartItem = {
   selected: boolean
 }
 
+export type GoogleUser = {
+  id: string
+  email: string
+  name: string
+  picture: string
+}
+
 export const LICENSES: License[] = [
   {
     type: 'basic',
@@ -266,6 +273,11 @@ type CartContextType = {
   paypalState: 'login' | 'review' | 'processing' | 'success'
   purchasedItems: CartItem[]
   isDownloadsOpen: boolean
+  // User Authentication
+  user: GoogleUser | null
+  isLoadingUser: boolean
+  loginUser: (idToken: string) => Promise<boolean>
+  logoutUser: () => void
   // Search state & actions
   isSearchOpen: boolean
   searchQuery: string
@@ -309,6 +321,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [searchQuery, setSearchQuery] = useState("")
   const [searchSelectedTags, setSearchSelectedTags] = useState<string[]>([])
 
+  // User Authentication States
+  const [user, setUser] = useState<GoogleUser | null>(null)
+  const [isLoadingUser, setIsLoadingUser] = useState(false)
+
   // Cargar estado inicial desde localStorage si es posible
   useEffect(() => {
     const savedCart = localStorage.getItem("frzn_cart")
@@ -323,6 +339,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (savedPurchased) {
       try {
         setPurchasedItems(JSON.parse(savedPurchased))
+      } catch (e) {
+        console.error(e)
+      }
+    }
+    const savedUser = localStorage.getItem("frzn_user")
+    if (savedUser) {
+      try {
+        setUser(JSON.parse(savedUser))
       } catch (e) {
         console.error(e)
       }
@@ -478,6 +502,44 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsDownloadsOpen(true)
   }
 
+  const loginUser = async (idToken: string): Promise<boolean> => {
+    setIsLoadingUser(true)
+    try {
+      const appsScriptUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL
+      if (!appsScriptUrl) {
+        console.error("NEXT_PUBLIC_APPS_SCRIPT_URL is not defined")
+        setIsLoadingUser(false)
+        return false
+      }
+      
+      const response = await fetch(appsScriptUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8",
+        },
+        body: JSON.stringify({ idToken }),
+      })
+      const result = await response.json()
+      if (result.status === "success" && result.user) {
+        setUser(result.user)
+        localStorage.setItem("frzn_user", JSON.stringify(result.user))
+        setIsLoadingUser(false)
+        return true
+      } else {
+        console.error("Login failed:", result.message)
+      }
+    } catch (error) {
+      console.error("Error during Google Login sync:", error)
+    }
+    setIsLoadingUser(false)
+    return false
+  }
+
+  const logoutUser = () => {
+    setUser(null)
+    localStorage.removeItem("frzn_user")
+  }
+
   return (
     <CartContext.Provider value={{
       cart,
@@ -489,6 +551,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       paypalState,
       purchasedItems,
       isDownloadsOpen,
+      // User Authentication
+      user,
+      isLoadingUser,
+      loginUser,
+      logoutUser,
       // Search Context values
       isSearchOpen,
       searchQuery,

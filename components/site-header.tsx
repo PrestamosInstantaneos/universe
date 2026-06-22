@@ -1,8 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Menu, X, Search, ShoppingBag } from "lucide-react"
 import { useCart } from "./cart-context"
+import Script from "next/script"
+
+declare global {
+  interface Window {
+    google: any
+  }
+}
 
 const NAV = [
   { label: "FEED", char: "↘" },
@@ -14,10 +21,71 @@ const NAV = [
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false)
-  const { cart, setCartOpen, purchasedItems, openDownloads, openSearch } = useCart()
+  const [gsiLoaded, setGsiLoaded] = useState(false)
+  const { 
+    cart, 
+    setCartOpen, 
+    purchasedItems, 
+    openDownloads, 
+    openSearch,
+    user,
+    loginUser,
+    logoutUser
+  } = useCart()
+
+  useEffect(() => {
+    const initGoogle = () => {
+      const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
+      if (!clientId) {
+        console.warn("NEXT_PUBLIC_GOOGLE_CLIENT_ID is not configured in .env.local")
+        return
+      }
+
+      if (typeof window !== "undefined" && window.google && !user) {
+        try {
+          window.google.accounts.id.initialize({
+            client_id: clientId,
+            callback: async (response: any) => {
+              if (response.credential) {
+                await loginUser(response.credential)
+              }
+            },
+            auto_select: false,
+          })
+
+          const container = document.getElementById("google-login-btn")
+          if (container) {
+            window.google.accounts.id.renderButton(container, {
+              theme: "filled_black",
+              size: "medium",
+              shape: "rectangular",
+              text: "signin_with",
+            })
+          }
+        } catch (err) {
+          console.error("Error rendering Google login button:", err)
+        }
+      }
+    }
+
+    let timer: NodeJS.Timeout
+    if (gsiLoaded || (typeof window !== "undefined" && window.google)) {
+      timer = setTimeout(() => {
+        initGoogle()
+      }, 100)
+    }
+    return () => {
+      if (timer) clearTimeout(timer)
+    }
+  }, [user, gsiLoaded])
 
   return (
     <header className="relative z-30 border-b border-white/5 bg-black/20 backdrop-blur-md">
+      <Script
+        src="https://accounts.google.com/gsi/client"
+        onLoad={() => setGsiLoaded(true)}
+        strategy="afterInteractive"
+      />
       <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-6 py-5 md:px-8">
         {/* Logo */}
         <a href="#" className="flex items-center gap-2" aria-label="FRZN inicio">
@@ -58,6 +126,40 @@ export function SiteHeader() {
           >
             START SELLING
           </a>
+
+          {/* Google Auth Button / User Dropdown */}
+          {user ? (
+            <div className="relative group">
+              <button className="flex items-center gap-2 border border-white/10 bg-white/5 p-1 pr-3 rounded-full hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src={user.picture} 
+                  alt={user.name} 
+                  className="size-7 rounded-full object-cover border border-white/20" 
+                  referrerPolicy="no-referrer"
+                />
+                <span className="font-mono text-[9px] tracking-[0.12em] font-bold text-foreground max-w-[90px] truncate hidden md:inline">
+                  {user.name.split(" ")[0].toUpperCase()}
+                </span>
+              </button>
+              {/* Dropdown Menu */}
+              <div className="absolute right-0 mt-2 w-48 origin-top-right rounded-sm border border-white/10 bg-zinc-950/95 backdrop-blur-md p-1.5 shadow-2xl opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-150 z-50">
+                <div className="px-3 py-2 border-b border-white/5">
+                  <p className="font-mono text-[10px] font-bold text-foreground truncate">{user.name}</p>
+                  <p className="font-mono text-[8px] text-foreground/45 truncate mt-0.5">{user.email}</p>
+                </div>
+                <button
+                  onClick={logoutUser}
+                  className="w-full text-left font-mono text-[9px] tracking-[0.12em] text-red-400 hover:text-red-300 hover:bg-red-500/10 px-3 py-2 transition-all cursor-pointer rounded-sm mt-1"
+                >
+                  CERRAR SESIÓN
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div id="google-login-btn" className="h-[36px] flex items-center"></div>
+          )}
+
           {/* Header Search Icon Button */}
           <button
             onClick={() => openSearch()}

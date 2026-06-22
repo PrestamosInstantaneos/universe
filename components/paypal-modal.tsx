@@ -11,13 +11,24 @@ export function PaypalModal() {
     setPaypalState, 
     closeCheckout, 
     confirmPurchase, 
-    cart 
+    cart,
+    user
   } = useCart()
 
   // Credenciales simuladas
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+
+  React.useEffect(() => {
+    if (isPaypalOpen && user) {
+      setEmail(user.email)
+      setPassword("••••••••••••")
+    } else if (isPaypalOpen && !user) {
+      setEmail("")
+      setPassword("")
+    }
+  }, [isPaypalOpen, user])
 
   if (!isPaypalOpen) return null
 
@@ -152,12 +163,22 @@ export function PaypalModal() {
             {paypalState === "review" && (
               <div className="space-y-4">
                 <div className="flex items-center gap-3 bg-slate-100 border border-slate-200 rounded-lg p-3">
-                  <div className="size-9 bg-[#003087]/10 rounded-full flex items-center justify-center text-[#003087] font-bold text-xs shrink-0">
-                    U
-                  </div>
+                  {user ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img 
+                      src={user.picture} 
+                      alt={user.name} 
+                      className="size-9 rounded-full object-cover border border-slate-300 shrink-0" 
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className="size-9 bg-[#003087]/10 rounded-full flex items-center justify-center text-[#003087] font-bold text-xs shrink-0">
+                      U
+                    </div>
+                  )}
                   <div className="text-xs">
-                    <span className="font-bold text-slate-700 block">Usuario: {email || "productor_anonimo@gmail.com"}</span>
-                    <span className="text-slate-400">Verificado • music_maker_pro</span>
+                    <span className="font-bold text-slate-700 block">Usuario: {user ? user.name : (email || "productor_anonimo@gmail.com")}</span>
+                    <span className="text-slate-400">{user ? "Sesión Google Activa" : "Verificado • music_maker_pro"}</span>
                   </div>
                   
                   <button 
