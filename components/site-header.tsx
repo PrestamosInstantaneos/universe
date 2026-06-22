@@ -160,10 +160,13 @@ export function SiteHeader() {
                 </div>
               </div>
             ) : (
-              <div className="flex h-[36px] items-center justify-center border border-primary/30 bg-black/40 px-2 rounded-sm hover:border-primary transition-all overflow-hidden">
+              <div 
+                className="flex h-[32px] items-center justify-center border border-primary/30 bg-black/40 rounded-sm hover:border-primary transition-all overflow-hidden"
+                style={{ colorScheme: "light" }}
+              >
                 <div 
                   id="google-login-btn" 
-                  className="h-[28px] flex items-center bg-transparent [&_iframe]:!bg-transparent [&_iframe]:!border-none [&_div]:!bg-transparent"
+                  className="h-[32px] flex items-center bg-transparent [&_iframe]:!bg-transparent [&_iframe]:!border-none [&_div]:!bg-transparent"
                 ></div>
               </div>
             )
