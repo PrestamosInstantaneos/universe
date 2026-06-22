@@ -359,6 +359,67 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("frzn_cart", JSON.stringify(newCart))
   }
 
+  // Fusionar el carrito local y el carrito del servidor
+  const mergeCarts = (localItems: CartItem[], serverItems: any[]): CartItem[] => {
+    const merged = [...localItems]
+    serverItems.forEach((sItem: any) => {
+      // Buscar si ya existe la misma licencia del mismo track
+      const exists = merged.some(
+        (lItem) => lItem.track.id === sItem.trackId && lItem.licenseType === sItem.licenseType
+      )
+      if (!exists) {
+        const fullTrack = ALL_TRACKS.find(t => t.id === sItem.trackId)
+        if (fullTrack) {
+          merged.push({
+            cartId: `${sItem.trackId}-${sItem.licenseType}-${Date.now()}`,
+            track: fullTrack,
+            licenseType: sItem.licenseType as LicenseType,
+            price: sItem.price,
+            selected: sItem.selected
+          })
+        }
+      }
+    })
+    return merged
+  }
+
+  // Sincronizar el carrito actual con Google Sheets
+  const syncCartWithServer = async (currentCart: CartItem[], userEmail: string) => {
+    try {
+      const appsScriptUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL
+      if (!appsScriptUrl) return
+      
+      const simplifiedCart = currentCart.map(item => ({
+        trackId: item.track.id,
+        title: item.track.title,
+        licenseType: item.licenseType,
+        price: item.price,
+        selected: item.selected
+      }))
+      
+      await fetch(appsScriptUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8",
+        },
+        body: JSON.stringify({
+          action: "syncCart",
+          email: userEmail,
+          cart: simplifiedCart
+        }),
+      })
+    } catch (error) {
+      console.error("Error syncing cart to Google Sheets:", error)
+    }
+  }
+
+  // Sincronizar automáticamente el carrito con el servidor al cambiar
+  useEffect(() => {
+    if (user) {
+      syncCartWithServer(cart, user.email)
+    }
+  }, [cart, user])
+
   const openSearch = (initialTag?: string) => {
     setSearchQuery("")
     if (initialTag) {
@@ -517,12 +578,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         headers: {
           "Content-Type": "text/plain;charset=utf-8",
         },
-        body: JSON.stringify({ idToken }),
+        body: JSON.stringify({ action: "login", idToken }),
       })
       const result = await response.json()
       if (result.status === "success" && result.user) {
         setUser(result.user)
         localStorage.setItem("frzn_user", JSON.stringify(result.user))
+        
+        // Cargar y fusionar el carrito recibido de Google Sheets
+        if (result.cart && result.cart.length > 0) {
+          const merged = mergeCarts(cart, result.cart)
+          setCart(merged)
+          localStorage.setItem("frzn_cart", JSON.stringify(merged))
+        }
+        
         setIsLoadingUser(false)
         return true
       } else {
