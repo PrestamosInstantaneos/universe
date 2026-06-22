@@ -385,9 +385,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Sincronizar el carrito actual con Google Sheets
   const syncCartWithServer = async (currentCart: CartItem[], userEmail: string) => {
+    console.log("🔄 Intentando sincronizar carrito con el servidor para:", userEmail, currentCart);
     try {
       const appsScriptUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL
-      if (!appsScriptUrl) return
+      if (!appsScriptUrl) {
+        console.warn("⚠️ No se puede sincronizar: NEXT_PUBLIC_APPS_SCRIPT_URL no está configurada en las variables de entorno.");
+        return
+      }
       
       const simplifiedCart = currentCart.map(item => ({
         trackId: item.track.id,
@@ -397,7 +401,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         selected: item.selected
       }))
       
-      await fetch(appsScriptUrl, {
+      const response = await fetch(appsScriptUrl, {
         method: "POST",
         headers: {
           "Content-Type": "text/plain;charset=utf-8",
@@ -408,8 +412,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           cart: simplifiedCart
         }),
       })
+      const result = await response.json()
+      console.log("✅ Resultado de sincronización de carrito:", result);
     } catch (error) {
-      console.error("Error syncing cart to Google Sheets:", error)
+      console.error("❌ Error syncing cart to Google Sheets:", error)
     }
   }
 
