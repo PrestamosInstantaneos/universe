@@ -12,19 +12,19 @@ export function SiteFooter() {
         {/* Enlaces de políticas */}
         <div className="flex items-center gap-6">
           <Link
-            href="/terms"
+            href="#"
             className="hover:text-primary transition-colors uppercase"
           >
             Términos
           </Link>
           <Link
-            href="/privacy"
+            href="#"
             className="hover:text-primary transition-colors uppercase"
           >
             Privacidad
           </Link>
           <Link
-            href="/help"
+            href="#"
             className="hover:text-primary transition-colors uppercase"
           >
             Ayuda
