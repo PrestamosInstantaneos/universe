@@ -15,6 +15,9 @@ export type Track = {
   isAd?: boolean
   hasDownload?: boolean
   emoji?: string
+  expuesto?: boolean
+  tendencia?: boolean
+  dropeado?: boolean
 }
 
 export type LicenseType = 'basic' | 'premium' | 'unlimited' | 'exclusive'
@@ -263,6 +266,51 @@ export const ALL_TRACKS: Track[] = [
   }
 ]
 
+export type NewsPost = {
+  id: string
+  title: string
+  description: string
+  content: string
+  image: string
+  link?: string
+  date: string
+  expuesto: boolean
+  tag: string
+}
+
+export const DEFAULT_NEWS: NewsPost[] = [
+  {
+    id: "post-1",
+    title: "Actualización de Verano: 15 Nuevos Beats Melódicos",
+    date: "20 DE JUNIO, 2026",
+    tag: "NUEVO DROPEO",
+    description: "El catálogo se ha actualizado con nuevos ritmos de trap y R&B. Escucha los adelantos exclusivos en la sección de drops.",
+    content: "Nuestros administradores acaban de publicar un lote de 15 instrumentales exclusivos con enfoque melódico, ideales para voces R&B y trap agresivo. Además, se han ajustado los contratos de la licencia Unlimited para otorgar un 10% adicional de regalías en favor del artista en plataformas de streaming. ¡No te pierdas estos nuevos beats e impulso tu siguiente lanzamiento hoy mismo!",
+    image: "/images/featured.png",
+    expuesto: true
+  },
+  {
+    id: "post-2",
+    title: "2x1 en Licencias Básicas y Premium por Tiempo Limitado",
+    date: "18 DE JUNIO, 2026",
+    tag: "OFERTA",
+    description: "Añade dos beats con la misma licencia a tu carrito y el descuento se aplicará automáticamente al pagar.",
+    content: "Queremos apoyar a los artistas independientes este mes. Al añadir cualquier par de beats de la misma categoría de licencia (Basic o Premium) a tu carrito de compras, el sistema de FRZN descontará automáticamente el de menor valor. Esta oferta especial estará activa por tiempo limitado y finalizará el 30 de junio. ¡Aprovecha para armar tus maquetas!",
+    image: "/images/city-banner.png",
+    expuesto: true
+  },
+  {
+    id: "post-3",
+    title: "Cómo registrar y monetizar tu canción usando nuestras licencias",
+    date: "15 DE JUNIO, 2026",
+    tag: "TUTORIAL",
+    description: "Una guía rápida paso a paso sobre cómo registrar tus canciones en BMI/ASCAP utilizando la licencia exclusiva de FRZN.",
+    content: "Comprar un beat es solo el primer paso en tu carrera musical. En este post de ayuda, te explicamos detalladamente cómo debes rellenar los datos de escritor y editor al registrar tu tema en sociedades de gestión de derechos de autor (como BMI, ASCAP o SCD). Desglosamos las diferencias clave sobre las cláusulas de regalías contenidas en tu licencia digital para que no tengas ningún inconveniente al monetizar tus pistas en plataformas de streaming como YouTube o Spotify.",
+    image: "/images/hero-thumb-2.png",
+    expuesto: true
+  }
+]
+
 type CartContextType = {
   cart: CartItem[]
   licenseModalTrack: Track | null
@@ -278,6 +326,9 @@ type CartContextType = {
   releases: Track[]
   allTracks: Track[]
   refreshCatalog: () => Promise<void>
+  // News
+  news: NewsPost[]
+  allNews: NewsPost[]
   // User Authentication
   user: GoogleUser | null
   isLoadingUser: boolean
@@ -331,8 +382,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [isLoadingUser, setIsLoadingUser] = useState(false)
 
   // Dynamic Catalog States
+  const [allTracks, setAllTracks] = useState<Track[]>(() => ALL_TRACKS)
   const [tracks, setTracks] = useState<Track[]>(() => ALL_TRACKS.filter(t => !t.id.startsWith("rel-")))
   const [releases, setReleases] = useState<Track[]>(() => ALL_TRACKS.filter(t => t.id.startsWith("rel-")))
+  const [allNews, setAllNews] = useState<NewsPost[]>(() => DEFAULT_NEWS)
+  const [news, setNews] = useState<NewsPost[]>(() => DEFAULT_NEWS)
 
   const refreshCatalog = async () => {
     try {
@@ -341,14 +395,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         console.warn("NEXT_PUBLIC_APPS_SCRIPT_URL is not defined")
         return
       }
+
+      // 1. Obtener Beats
       const response = await fetch(`${appsScriptUrl}?action=getTracks`)
       const result = await response.json()
       if (result.status === "success" && Array.isArray(result.tracks)) {
+        const parsedTracks = result.tracks.map((t: any) => ({
+          ...t,
+          expuesto: t.expuesto !== false && t.expuesto !== "FALSE",
+          tendencia: t.tendencia !== false && t.tendencia !== "FALSE",
+          dropeado: t.dropeado === true || t.dropeado === "TRUE"
+        }))
+
         // Merge fetched tracks with ALL_TRACKS to preserve local metadata/ads/emojis
         const trackMap = new Map<string, Track>()
         ALL_TRACKS.forEach(t => trackMap.set(t.id, t))
         
-        result.tracks.forEach((t: Track) => {
+        parsedTracks.forEach((t: Track) => {
           trackMap.set(t.id, {
             ...trackMap.get(t.id),
             ...t
@@ -356,8 +419,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         })
         
         const combined = Array.from(trackMap.values())
-        setTracks(combined.filter(t => !t.id.startsWith("rel-")))
-        setReleases(combined.filter(t => t.id.startsWith("rel-")))
+        setAllTracks(combined)
+        setTracks(combined.filter(t => t.expuesto !== false && t.tendencia !== false))
+        setReleases(combined.filter(t => t.expuesto !== false && t.dropeado === true))
+      }
+
+      // 2. Obtener Noticias
+      const newsResponse = await fetch(`${appsScriptUrl}?action=getNews`)
+      const newsResult = await newsResponse.json()
+      if (newsResult.status === "success" && Array.isArray(newsResult.news)) {
+        const parsedNews = newsResult.news.map((n: any) => ({
+          ...n,
+          expuesto: n.expuesto !== false && n.expuesto !== "FALSE"
+        }))
+        setAllNews(parsedNews)
+        setNews(parsedNews.filter((n: NewsPost) => n.expuesto !== false))
       }
     } catch (e) {
       console.error("Error fetching catalog:", e)
@@ -673,8 +749,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       // Dynamic Catalog
       tracks,
       releases,
-      allTracks: [...tracks, ...releases],
+      allTracks,
       refreshCatalog,
+      // News
+      news,
+      allNews,
       // User Authentication
       user,
       isLoadingUser,

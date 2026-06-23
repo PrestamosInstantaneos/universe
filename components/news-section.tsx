@@ -1,62 +1,44 @@
 "use client"
 
 import React, { useState } from "react"
-import { Calendar, User, ArrowRight, X, Megaphone, BookOpen, Clock } from "lucide-react"
-
-type Post = {
-  id: string
-  title: string
-  date: string
-  tag: string
-  tagColor: string
-  summary: string
-  content: string
-  image: string
-  author: string
-  readTime: string
-}
-
-const NEWS_POSTS: Post[] = [
-  {
-    id: "post-1",
-    title: "Actualización de Verano: 15 Nuevos Beats Melódicos",
-    date: "20 DE JUNIO, 2026",
-    tag: "NUEVO DROPEO",
-    tagColor: "text-primary border-primary/30 bg-primary/5",
-    summary: "El catálogo se ha actualizado con nuevos ritmos de trap y R&B. Escucha los adelantos exclusivos en la sección de drops.",
-    content: "Nuestros administradores acaban de publicar un lote de 15 instrumentales exclusivos con enfoque melódico, ideales para voces R&B y trap agresivo. Además, se han ajustado los contratos de la licencia Unlimited para otorgar un 10% adicional de regalías en favor del artista en plataformas de streaming. ¡No te pierdas estos nuevos beats e impulsa tu siguiente lanzamiento hoy mismo!",
-    image: "/images/featured.png",
-    author: "FRZN Admin",
-    readTime: "2 min de lectura"
-  },
-  {
-    id: "post-2",
-    title: "2x1 en Licencias Básicas y Premium por Tiempo Limitado",
-    date: "18 DE JUNIO, 2026",
-    tag: "OFERTA",
-    tagColor: "text-emerald-400 border-emerald-500/30 bg-emerald-500/5",
-    summary: "Añade dos beats con la misma licencia a tu carrito y el descuento se aplicará automáticamente al pagar.",
-    content: "Queremos apoyar a los artistas independientes este mes. Al añadir cualquier par de beats de la misma categoría de licencia (Basic o Premium) a tu carrito de compras, el sistema de FRZN descontará automáticamente el de menor valor. Esta oferta especial estará activa por tiempo limitado y finalizará el 30 de junio. ¡Aprovecha para armar tus maquetas!",
-    image: "/images/city-banner.png",
-    author: "Marketing FRZN",
-    readTime: "3 min de lectura"
-  },
-  {
-    id: "post-3",
-    title: "Cómo registrar y monetizar tu canción usando nuestras licencias",
-    date: "15 DE JUNIO, 2026",
-    tag: "TUTORIAL",
-    tagColor: "text-sky-400 border-sky-500/30 bg-sky-500/5",
-    summary: "Una guía rápida paso a paso sobre cómo registrar tus canciones en BMI/ASCAP utilizando la licencia exclusiva de FRZN.",
-    content: "Comprar un beat es solo el primer paso en tu carrera musical. En este post de ayuda, te explicamos detalladamente cómo debes rellenar los datos de escritor y editor al registrar tu tema en sociedades de gestión de derechos de autor (como BMI, ASCAP o SCD). Desglosamos las diferencias clave sobre las cláusulas de regalías contenidas en tu licencia digital para que no tengas ningún inconveniente al monetizar tus pistas en plataformas de streaming como YouTube o Spotify.",
-    image: "/images/hero-thumb-2.png",
-    author: "Soporte FRZN",
-    readTime: "5 min de lectura"
-  }
-]
+import { Calendar, User, ArrowRight, X, Megaphone, BookOpen, Clock, ExternalLink } from "lucide-react"
+import { useCart, NewsPost } from "./cart-context"
 
 export function NewsSection() {
-  const [activePost, setActivePost] = useState<Post | null>(null)
+  const { news } = useCart()
+  const [activePost, setActivePost] = useState<NewsPost | null>(null)
+
+  const getTagStyles = (tag: string) => {
+    const upper = (tag || "").toUpperCase()
+    if (upper.includes("OFERTA") || upper.includes("DESCUENTO") || upper.includes("SALE")) {
+      return "text-emerald-400 border-emerald-500/30 bg-emerald-500/5"
+    }
+    if (upper.includes("NUEVO") || upper.includes("DROP") || upper.includes("LANZAMIENTO")) {
+      return "text-primary border-primary/30 bg-primary/5"
+    }
+    return "text-sky-400 border-sky-500/30 bg-sky-500/5"
+  }
+
+  const getReadTime = (content: string) => {
+    if (!content) return "1 min de lectura"
+    const words = content.split(/\s+/).length
+    const minutes = Math.max(1, Math.ceil(words / 200))
+    return `${minutes} min de lectura`
+  }
+
+  const formatDate = (dateStr: string) => {
+    try {
+      const date = new Date(dateStr)
+      if (isNaN(date.getTime())) return dateStr
+      return date.toLocaleDateString("es-ES", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric"
+      }).toUpperCase()
+    } catch {
+      return dateStr
+    }
+  }
 
   return (
     <section className="mx-auto max-w-[1400px] px-6 py-12 md:px-8 md:py-16 space-y-8">
@@ -77,64 +59,70 @@ export function NewsSection() {
 
       {/* CARDS GRID */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {NEWS_POSTS.map((post) => (
-          <article 
-            key={post.id}
-            className="group flex flex-col bg-zinc-950/40 border border-white/5 hover:border-primary/25 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-[0_0_20px_rgba(236,72,153,0.06)]"
-          >
-            {/* Post Image Banner */}
-            <div className="relative aspect-[16/10] w-full overflow-hidden bg-zinc-900">
-              <img 
-                src={post.image} 
-                alt={post.title}
-                className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 to-transparent opacity-80" />
-              
-              {/* Category Tag */}
-              <span className={`absolute top-4 left-4 border font-mono text-[8px] font-bold px-2 py-0.5 rounded tracking-wider uppercase ${post.tagColor}`}>
-                {post.tag}
-              </span>
-            </div>
+        {news.length > 0 ? (
+          news.map((post) => (
+            <article 
+              key={post.id}
+              className="group flex flex-col bg-zinc-950/40 border border-white/5 hover:border-primary/25 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-[0_0_20px_rgba(236,72,153,0.06)]"
+            >
+              {/* Post Image Banner */}
+              <div className="relative aspect-[16/10] w-full overflow-hidden bg-zinc-900">
+                <img 
+                  src={post.image || "/images/featured.png"} 
+                  alt={post.title}
+                  className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 to-transparent opacity-80" />
+                
+                {/* Category Tag */}
+                <span className={`absolute top-4 left-4 border font-mono text-[8px] font-bold px-2 py-0.5 rounded tracking-wider uppercase ${getTagStyles(post.tag)}`}>
+                  {post.tag}
+                </span>
+              </div>
 
-            {/* Post Content Details */}
-            <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-              <div className="space-y-2.5">
-                {/* Meta details */}
-                <div className="flex items-center gap-3.5 font-mono text-[8.5px] text-foreground/45 uppercase tracking-wide">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="size-3 text-primary/75" />
-                    <span>{post.date}</span>
+              {/* Post Content Details */}
+              <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                <div className="space-y-2.5">
+                  {/* Meta details */}
+                  <div className="flex items-center gap-3.5 font-mono text-[8.5px] text-foreground/45 uppercase tracking-wide text-left">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="size-3 text-primary/75" />
+                      <span>{formatDate(post.date)}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="size-3 text-foreground/35" />
+                      <span>{getReadTime(post.content)}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="size-3 text-foreground/35" />
-                    <span>{post.readTime}</span>
-                  </div>
+
+                  <h3 className="font-heading text-sm sm:text-base font-bold text-foreground line-clamp-2 uppercase tracking-tight group-hover:text-primary transition-colors text-left">
+                    {post.title}
+                  </h3>
+
+                  <p className="font-sans text-[11px] leading-relaxed text-foreground/60 line-clamp-3 text-left">
+                    {post.description}
+                  </p>
                 </div>
 
-                <h3 className="font-heading text-sm sm:text-base font-bold text-foreground line-clamp-2 uppercase tracking-tight group-hover:text-primary transition-colors">
-                  {post.title}
-                </h3>
-
-                <p className="font-sans text-[11px] leading-relaxed text-foreground/60 line-clamp-3">
-                  {post.summary}
-                </p>
+                {/* Read More button trigger */}
+                <div className="pt-2 text-left">
+                  <button
+                    onClick={() => setActivePost(post)}
+                    className="inline-flex items-center gap-1.5 font-mono text-[9.5px] font-bold text-primary hover:text-white uppercase tracking-wider transition-colors cursor-pointer group/btn"
+                  >
+                    <span>LEER MÁS</span>
+                    <ArrowRight className="size-3 transition-transform group-hover/btn:translate-x-1" />
+                  </button>
+                </div>
               </div>
-
-              {/* Read More button trigger */}
-              <div className="pt-2">
-                <button
-                  onClick={() => setActivePost(post)}
-                  className="inline-flex items-center gap-1.5 font-mono text-[9.5px] font-bold text-primary hover:text-white uppercase tracking-wider transition-colors cursor-pointer group/btn"
-                >
-                  <span>LEER MÁS</span>
-                  <ArrowRight className="size-3 transition-transform group-hover/btn:translate-x-1" />
-                </button>
-              </div>
-            </div>
-          </article>
-        ))}
+            </article>
+          ))
+        ) : (
+          <div className="col-span-3 py-12 text-center text-foreground/35 font-mono text-xs uppercase tracking-widest">
+            No hay comunicados disponibles
+          </div>
+        )}
       </div>
 
       {/* FULL POST DETAIL MODAL READER */}
@@ -154,33 +142,33 @@ export function NewsSection() {
             {/* Modal Image Header Banner */}
             <div className="relative aspect-[21/9] w-full overflow-hidden bg-zinc-900">
               <img 
-                src={activePost.image} 
+                src={activePost.image || "/images/featured.png"} 
                 alt={activePost.title} 
                 className="size-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent" />
               
-              <span className={`absolute bottom-4 left-6 border font-mono text-[8px] font-bold px-2 py-0.5 rounded tracking-wider uppercase ${activePost.tagColor}`}>
+              <span className={`absolute bottom-4 left-6 border font-mono text-[8px] font-bold px-2 py-0.5 rounded tracking-wider uppercase ${getTagStyles(activePost.tag)}`}>
                 {activePost.tag}
               </span>
             </div>
 
             {/* Modal Scrollable Article Body */}
-            <div className="p-6 md:p-8 overflow-y-auto space-y-5 scrollbar-none">
+            <div className="p-6 md:p-8 overflow-y-auto space-y-6 scrollbar-none text-left">
               <div className="space-y-3">
                 {/* Meta details */}
                 <div className="flex flex-wrap items-center gap-4 font-mono text-[9px] text-foreground/45 uppercase tracking-wider">
                   <div className="flex items-center gap-1.5">
                     <Calendar className="size-3.5 text-primary/75" />
-                    <span>{activePost.date}</span>
+                    <span>{formatDate(activePost.date)}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <User className="size-3.5 text-primary/75" />
-                    <span>POR {activePost.author}</span>
+                    <span>POR FRZN ADMIN</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Clock className="size-3.5 text-foreground/35" />
-                    <span>{activePost.readTime}</span>
+                    <span>{getReadTime(activePost.content)}</span>
                   </div>
                 </div>
 
@@ -189,10 +177,25 @@ export function NewsSection() {
                 </h3>
               </div>
 
-              <div className="border-t border-white/5 pt-5">
+              <div className="border-t border-white/5 pt-5 space-y-6">
                 <p className="font-sans text-[12.5px] leading-relaxed text-foreground/80 whitespace-pre-line text-justify">
                   {activePost.content}
                 </p>
+
+                {/* Botón de Enlace si está disponible */}
+                {activePost.link && (
+                  <div className="pt-4 border-t border-white/5 flex justify-center">
+                    <a
+                      href={activePost.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 border border-primary/40 bg-primary/5 hover:bg-primary hover:text-primary-foreground text-primary font-mono text-[10px] tracking-widest font-bold px-6 py-3.5 rounded transition-all cursor-pointer uppercase shadow-lg shadow-primary/5"
+                    >
+                      Ver detalles / Visitar enlace
+                      <ExternalLink className="size-3.5" />
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
 

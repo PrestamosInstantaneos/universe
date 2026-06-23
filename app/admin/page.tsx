@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { useCart } from "@/components/cart-context"
+import { useCart, Track, NewsPost } from "@/components/cart-context"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { 
@@ -18,7 +18,10 @@ import {
   Users, 
   ShoppingBag, 
   ExternalLink,
-  ChevronRight
+  Edit,
+  PlusCircle,
+  Megaphone,
+  X
 } from "lucide-react"
 
 type AdminStats = {
@@ -44,10 +47,14 @@ type AdminStats = {
 
 export default function AdminPage() {
   const [mounted, setMounted] = useState(false)
-  const { user, logoutUser, refreshCatalog, tracks, allTracks } = useCart()
+  const { user, logoutUser, refreshCatalog, allTracks, allNews } = useCart()
 
-  // Tab State
-  const [activeTab, setActiveTab] = useState<"stats" | "upload" | "catalog">("stats")
+  // Tab State: stats | upload | catalog | news
+  const [activeTab, setActiveTab] = useState<"stats" | "upload" | "catalog" | "news">("stats")
+
+  // Local state copies for instant toggles
+  const [localTracks, setLocalTracks] = useState<Track[]>([])
+  const [localNews, setLocalNews] = useState<NewsPost[]>([])
 
   // Statistics State
   const [stats, setStats] = useState<AdminStats | null>(null)
@@ -63,14 +70,49 @@ export default function AdminPage() {
   const [tags, setTags] = useState("")
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [audioFile, setAudioFile] = useState<File | null>(null)
+  const [expuestoCheck, setExpuestoCheck] = useState(true)
+  const [tendenciaCheck, setTendenciaCheck] = useState(true)
+  const [dropeadoCheck, setDropeadoCheck] = useState(false)
 
-  // Form submission status
+  // Edit Modal States for Beats
+  const [editingBeat, setEditingBeat] = useState<Track | null>(null)
+  const [editTitle, setEditTitle] = useState("")
+  const [editProducer, setEditProducer] = useState("")
+  const [editPrice, setEditPrice] = useState("")
+  const [editBpm, setEditBpm] = useState("")
+  const [editKey, setEditKey] = useState("")
+  const [editTags, setEditTags] = useState("")
+  const [editImageFile, setEditImageFile] = useState<File | null>(null)
+  const [editExpuesto, setEditExpuesto] = useState(true)
+  const [editTendencia, setEditTendencia] = useState(true)
+  const [editDropeado, setEditDropeado] = useState(false)
+
+  // News CRUD form fields
+  const [editingNews, setEditingNews] = useState<NewsPost | null>(null)
+  const [newsTitle, setNewsTitle] = useState("")
+  const [newsTag, setNewsTag] = useState("AVISO")
+  const [newsDescription, setNewsDescription] = useState("")
+  const [newsContent, setNewsContent] = useState("")
+  const [newsLink, setNewsLink] = useState("")
+  const [newsImageFile, setNewsImageFile] = useState<File | null>(null)
+  const [newsExpuesto, setNewsExpuesto] = useState(true)
+  const [showNewsModal, setShowNewsModal] = useState(false)
+
+  // Global action statuses
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
   const [statusMessage, setStatusMessage] = useState("")
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    if (allTracks) setLocalTracks(allTracks)
+  }, [allTracks])
+
+  useEffect(() => {
+    if (allNews) setLocalNews(allNews)
+  }, [allNews])
 
   const fetchStats = async () => {
     setLoadingStats(true)
@@ -85,7 +127,7 @@ export default function AdminPage() {
       if (result.status === "success" && result.stats) {
         setStats(result.stats)
       } else {
-        throw new Error(result.message || "Error al obtener estadísticas de Apps Script.")
+        throw new Error(result.message || "Error al obtener estadísticas.")
       }
     } catch (err: any) {
       console.error("Error fetching stats:", err)
@@ -95,7 +137,6 @@ export default function AdminPage() {
     }
   }
 
-  // Cargar estadísticas si el usuario es administrador
   useEffect(() => {
     if (mounted && user) {
       const isAuthorized =
@@ -122,6 +163,7 @@ export default function AdminPage() {
     })
   }
 
+  // Subir Nuevo Beat (Crear)
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!title || !producer || !price || !bpm || !key || !tags || !imageFile || !audioFile) {
@@ -131,29 +173,24 @@ export default function AdminPage() {
     }
 
     setStatus("loading")
-    setStatusMessage("Leyendo archivos y codificando en Base64...")
+    setStatusMessage("Procesando archivos...")
 
     try {
       const imageResult = await readFileAsBase64(imageFile)
       const audioResult = await readFileAsBase64(audioFile)
 
-      setStatusMessage("Enviando archivos a Google Drive y Sheets...")
+      setStatusMessage("Subiendo archivos y registrando beat...")
 
       const appsScriptUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL
       const folderId = process.env.NEXT_PUBLIC_DRIVE_FOLDER_ID
 
-      if (!appsScriptUrl) {
-        throw new Error("La URL de Google Apps Script no está configurada.")
-      }
-      if (!folderId) {
-        throw new Error("El ID de la carpeta de Google Drive no está configurado.")
+      if (!appsScriptUrl || !folderId) {
+        throw new Error("Configuración incompleta en variables de entorno.")
       }
 
       const response = await fetch(appsScriptUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "text/plain;charset=utf-8",
-        },
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({
           action: "uploadBeat",
           folderId,
@@ -169,6 +206,9 @@ export default function AdminPage() {
           audioData: audioResult.data,
           audioMime: audioResult.mime,
           audioName: audioFile.name,
+          expuesto: expuestoCheck,
+          tendencia: tendenciaCheck,
+          dropeado: dropeadoCheck
         }),
       })
 
@@ -176,29 +216,231 @@ export default function AdminPage() {
       if (result.status === "success") {
         setStatus("success")
         setStatusMessage("¡Beat subido exitosamente a Google Drive y Sheets!")
-        
-        // Refrescar catálogo
         await refreshCatalog()
-        // Recargar stats
         fetchStats()
 
-        // Reset campos no fijos
+        // Reset
         setTitle("")
         setKey("")
         setTags("")
         setImageFile(null)
         setAudioFile(null)
       } else {
-        throw new Error(result.message || "Error al registrar el beat.")
+        throw new Error(result.message || "Error al registrar beat.")
       }
     } catch (err: any) {
       console.error(err)
       setStatus("error")
-      setStatusMessage(err.message || "Ocurrió un error inesperado al subir el beat.")
+      setStatusMessage(err.message || "Error inesperado al subir beat.")
     }
   }
 
-  // Formatear fechas cortas
+  // Toggles de Estado Rápidos
+  const handleToggle = async (id: string, type: "beats" | "news", field: "expuesto" | "tendencia" | "dropeado") => {
+    // Actualización optimista local
+    if (type === "beats") {
+      setLocalTracks(prev => prev.map(t => t.id === id ? { ...t, [field]: !t[field] } : t))
+    } else {
+      setLocalNews(prev => prev.map(n => n.id === id ? { ...n, [field]: !n[field] } : n))
+    }
+
+    try {
+      const appsScriptUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL
+      if (!appsScriptUrl) throw new Error("URL de Apps Script no configurada")
+
+      const response = await fetch(appsScriptUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "toggleStatus",
+          type,
+          field,
+          id
+        })
+      })
+      const result = await response.json()
+      if (result.status !== "success") {
+        throw new Error(result.message || "Error en el servidor")
+      }
+      // Sincronizar catálogo global de forma silenciosa
+      await refreshCatalog()
+    } catch (err: any) {
+      console.error(err)
+      alert(`Error al actualizar estado: ${err.message}`)
+      // Revertir cambio local
+      if (type === "beats") {
+        setLocalTracks(prev => prev.map(t => t.id === id ? { ...t, [field]: !t[field] } : t))
+      } else {
+        setLocalNews(prev => prev.map(n => n.id === id ? { ...n, [field]: !n[field] } : n))
+      }
+    }
+  }
+
+  // Abrir Modal de Edición de Beat
+  const openEditBeatModal = (track: Track) => {
+    setEditingBeat(track)
+    setEditTitle(track.title)
+    setEditProducer(track.producer)
+    setEditPrice(track.price.replace("$", ""))
+    setEditBpm(String(track.bpm))
+    setEditKey(track.key)
+    setEditTags(track.tags.join(", "))
+    setEditExpuesto(track.expuesto !== false)
+    setEditTendencia(track.tendencia !== false)
+    setEditDropeado(track.dropeado === true)
+    setEditImageFile(null)
+  }
+
+  // Enviar Cambios de Beat Modificado
+  const handleEditBeatSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingBeat) return
+
+    setStatus("loading")
+    setStatusMessage("Guardando cambios del beat...")
+
+    try {
+      let imageData = ""
+      let imageMime = ""
+      let imageName = ""
+
+      if (editImageFile) {
+        setStatusMessage("Codificando nueva portada...")
+        const imageResult = await readFileAsBase64(editImageFile)
+        imageData = imageResult.data
+        imageMime = imageResult.mime
+        imageName = editImageFile.name
+      }
+
+      const appsScriptUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL
+      const folderId = process.env.NEXT_PUBLIC_DRIVE_FOLDER_ID
+
+      if (!appsScriptUrl) throw new Error("URL de Apps Script no configurada.")
+
+      const response = await fetch(appsScriptUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "updateBeat",
+          id: editingBeat.id,
+          folderId,
+          title: editTitle,
+          producer: editProducer,
+          price: parseFloat(editPrice),
+          bpm: parseInt(editBpm, 10),
+          key: editKey,
+          tags: editTags,
+          imageData,
+          imageMime,
+          imageName,
+          expuesto: editExpuesto,
+          tendencia: editTendencia,
+          dropeado: editDropeado
+        })
+      })
+
+      const result = await response.json()
+      if (result.status === "success") {
+        setStatus("success")
+        setStatusMessage("¡Beat actualizado correctamente!")
+        setEditingBeat(null)
+        await refreshCatalog()
+      } else {
+        throw new Error(result.message || "Error al actualizar beat.")
+      }
+    } catch (err: any) {
+      console.error(err)
+      setStatus("error")
+      setStatusMessage(err.message || "Error al modificar beat.")
+    }
+  }
+
+  // Abrir Modal de Carga/Edición de Noticias
+  const openCreateNews = () => {
+    setEditingNews(null)
+    setNewsTitle("")
+    setNewsTag("NUEVO DROPEO")
+    setNewsDescription("")
+    setNewsContent("")
+    setNewsLink("")
+    setNewsImageFile(null)
+    setNewsExpuesto(true)
+    setShowNewsModal(true)
+  }
+
+  const openEditNews = (post: NewsPost) => {
+    setEditingNews(post)
+    setNewsTitle(post.title)
+    setNewsTag(post.tag)
+    setNewsDescription(post.description)
+    setNewsContent(post.content)
+    setNewsLink(post.link || "")
+    setNewsImageFile(null)
+    setNewsExpuesto(post.expuesto !== false)
+    setShowNewsModal(true)
+  }
+
+  // Guardar Noticia (Crear o Modificar)
+  const handleNewsSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setStatus("loading")
+    setStatusMessage("Procesando noticia...")
+
+    try {
+      let imageData = ""
+      let imageMime = ""
+      let imageName = ""
+
+      if (newsImageFile) {
+        setStatusMessage("Cargando imagen de noticia...")
+        const imageResult = await readFileAsBase64(newsImageFile)
+        imageData = imageResult.data
+        imageMime = imageResult.mime
+        imageName = newsImageFile.name
+      }
+
+      const appsScriptUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL
+      const folderId = process.env.NEXT_PUBLIC_DRIVE_FOLDER_ID
+
+      if (!appsScriptUrl) throw new Error("URL de Apps Script no configurada.")
+
+      const response = await fetch(appsScriptUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: editingNews ? "updateNews" : "uploadNews",
+          id: editingNews?.id || "",
+          folderId,
+          title: newsTitle,
+          tag: newsTag,
+          description: newsDescription,
+          content: newsContent,
+          link: newsLink,
+          imageData,
+          imageMime,
+          imageName,
+          existingImage: editingNews?.image || "",
+          expuesto: newsExpuesto
+        })
+      })
+
+      const result = await response.json()
+      if (result.status === "success") {
+        setStatus("success")
+        setStatusMessage(editingNews ? "Noticia actualizada" : "Noticia publicada con éxito")
+        setShowNewsModal(false)
+        await refreshCatalog()
+        fetchStats()
+      } else {
+        throw new Error(result.message || "Error al guardar noticia.")
+      }
+    } catch (err: any) {
+      console.error(err)
+      setStatus("error")
+      setStatusMessage(err.message || "Error al procesar aviso.")
+    }
+  }
+
   const formatDate = (dateStr: string) => {
     try {
       const date = new Date(dateStr)
@@ -206,423 +448,169 @@ export default function AdminPage() {
       return date.toLocaleDateString("es-ES", {
         day: "2-digit",
         month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit"
+        year: "numeric"
       })
     } catch {
       return dateStr
     }
   }
 
-  // Render content based on active tab
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case "stats":
-        return (
-          <div className="space-y-8">
-            {/* Tarjetas Métricas */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              {/* Card 1: Usuarios */}
-              <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-lg text-left relative overflow-hidden group hover:border-primary/20 transition-all">
-                <div className="flex justify-between items-start">
-                  <div className="space-y-1">
-                    <span className="font-mono text-[9px] tracking-wider text-foreground/45 uppercase font-bold">Usuarios Registrados</span>
-                    <h3 className="text-3xl font-heading font-black text-foreground">
-                      {loadingStats ? (
-                        <Loader2 className="size-6 animate-spin text-primary" />
-                      ) : (
-                        stats?.totalUsers || 0
-                      )}
-                    </h3>
-                  </div>
-                  <div className="size-10 rounded bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-                    <Users className="size-5" />
-                  </div>
-                </div>
-                <div className="absolute bottom-0 inset-x-0 h-0.5 bg-gradient-to-r from-primary to-transparent opacity-50" />
-              </div>
-
-              {/* Card 2: Items en Carrito */}
-              <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-lg text-left relative overflow-hidden group hover:border-primary/20 transition-all">
-                <div className="flex justify-between items-start">
-                  <div className="space-y-1">
-                    <span className="font-mono text-[9px] tracking-wider text-foreground/45 uppercase font-bold">Carrito Activo (Items)</span>
-                    <h3 className="text-3xl font-heading font-black text-foreground">
-                      {loadingStats ? (
-                        <Loader2 className="size-6 animate-spin text-primary" />
-                      ) : (
-                        stats?.totalCartItems || 0
-                      )}
-                    </h3>
-                  </div>
-                  <div className="size-10 rounded bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-                    <ShoppingBag className="size-5" />
-                  </div>
-                </div>
-                <div className="absolute bottom-0 inset-x-0 h-0.5 bg-gradient-to-r from-primary to-transparent opacity-50" />
-              </div>
-
-              {/* Card 3: Beats en Catálogo */}
-              <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-lg text-left relative overflow-hidden group hover:border-primary/20 transition-all">
-                <div className="flex justify-between items-start">
-                  <div className="space-y-1">
-                    <span className="font-mono text-[9px] tracking-wider text-foreground/45 uppercase font-bold">Beats en Catálogo</span>
-                    <h3 className="text-3xl font-heading font-black text-foreground">
-                      {tracks.length}
-                    </h3>
-                  </div>
-                  <div className="size-10 rounded bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-                    <Music className="size-5" />
-                  </div>
-                </div>
-                <div className="absolute bottom-0 inset-x-0 h-0.5 bg-gradient-to-r from-primary to-transparent opacity-50" />
-              </div>
-            </div>
-
-            {statsError && (
-              <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/30 text-red-400 p-4 rounded font-mono text-xs uppercase tracking-wide">
-                <ShieldAlert className="size-5 shrink-0" />
-                <span>{statsError}</span>
-              </div>
-            )}
-
-            {/* Listas y Tablas */}
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 text-left">
-              {/* Tabla 1: Usuarios */}
-              <div className="xl:col-span-5 bg-zinc-950/45 border border-white/5 rounded-lg p-5 space-y-4">
-                <div className="border-b border-white/5 pb-3">
-                  <h4 className="font-heading text-xs font-bold text-foreground uppercase tracking-widest">
-                    Ultimos Usuarios Registrados
-                  </h4>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full font-mono text-[10px]">
-                    <thead>
-                      <tr className="border-b border-white/5 text-foreground/40 text-left">
-                        <th className="pb-2 font-bold uppercase">Perfil</th>
-                        <th className="pb-2 font-bold uppercase">Nombre</th>
-                        <th className="pb-2 font-bold uppercase">Email</th>
-                        <th className="pb-2 font-bold uppercase hidden sm:table-cell">Fecha</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {stats && stats.users.length > 0 ? (
-                        stats.users.map((u) => (
-                          <tr key={u.id} className="hover:bg-white/5 transition-colors">
-                            <td className="py-2.5">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={u.picture} alt="" className="size-6 rounded-full border border-white/10" referrerPolicy="no-referrer" />
-                            </td>
-                            <td className="py-2.5 font-bold text-foreground truncate max-w-[100px]">{u.name}</td>
-                            <td className="py-2.5 text-foreground/75 truncate max-w-[120px]">{u.email}</td>
-                            <td className="py-2.5 text-foreground/40 hidden sm:table-cell">{formatDate(u.dateAdded)}</td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={4} className="py-6 text-center text-foreground/30">
-                            {loadingStats ? "Cargando usuarios..." : "No hay usuarios registrados aún."}
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Tabla 2: Items en Carritos */}
-              <div className="xl:col-span-7 bg-zinc-950/45 border border-white/5 rounded-lg p-5 space-y-4">
-                <div className="border-b border-white/5 pb-3">
-                  <h4 className="font-heading text-xs font-bold text-foreground uppercase tracking-widest">
-                    Items en Carritos Activos
-                  </h4>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full font-mono text-[10px]">
-                    <thead>
-                      <tr className="border-b border-white/5 text-foreground/40 text-left">
-                        <th className="pb-2 font-bold uppercase">Usuario</th>
-                        <th className="pb-2 font-bold uppercase">Beat (Track)</th>
-                        <th className="pb-2 font-bold uppercase">Licencia</th>
-                        <th className="pb-2 font-bold uppercase">Precio</th>
-                        <th className="pb-2 font-bold uppercase hidden sm:table-cell text-center">Estado</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {stats && stats.cartItems.length > 0 ? (
-                        stats.cartItems.map((item, idx) => (
-                          <tr key={idx} className="hover:bg-white/5 transition-colors">
-                            <td className="py-2.5 text-foreground/80 truncate max-w-[140px] font-bold">{item.email}</td>
-                            <td className="py-2.5 text-primary uppercase font-bold truncate max-w-[150px]">{item.title}</td>
-                            <td className="py-2.5 uppercase text-foreground/50">{item.licenseType}</td>
-                            <td className="py-2.5 text-emerald-400 font-bold">${item.price.toFixed(2)}</td>
-                            <td className="py-2.5 hidden sm:table-cell text-center">
-                              {item.selected ? (
-                                <span className="bg-emerald-500/10 text-emerald-400 text-[8px] font-bold px-1.5 py-0.5 rounded border border-emerald-500/20">
-                                  LISTO
-                                </span>
-                              ) : (
-                                <span className="bg-zinc-500/10 text-zinc-400 text-[8px] px-1.5 py-0.5 rounded border border-zinc-500/20">
-                                  PAUSADO
-                                </span>
-                              )}
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={5} className="py-6 text-center text-foreground/30">
-                            {loadingStats ? "Cargando carrito..." : "No hay beats en carritos actualmente."}
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
+  // Render Pestaña Noticias
+  const renderNewsTab = () => {
+    return (
+      <div className="space-y-6 text-left">
+        <div className="flex justify-between items-center border-b border-white/5 pb-3">
+          <div>
+            <h3 className="font-heading text-lg font-bold text-foreground uppercase">Gestión de Noticias y Comunicados</h3>
+            <p className="font-mono text-[9px] text-foreground/45 uppercase mt-1">Crea y edita los posts que se visualizan en la web</p>
           </div>
-        )
-      case "upload":
-        return (
-          <div className="bg-zinc-950/45 border border-white/5 rounded-lg p-6 max-w-2xl mx-auto">
-            <div className="border-b border-white/5 pb-4 mb-6 text-left">
-              <h3 className="font-heading text-lg font-bold text-foreground uppercase">Formulario de Carga</h3>
-              <p className="font-mono text-[9px] text-foreground/45 uppercase mt-1">Sube audio y foto de portada directamente a Google Drive</p>
-            </div>
+          <button
+            onClick={openCreateNews}
+            className="flex items-center gap-2 border border-primary/50 bg-primary/10 hover:bg-primary hover:text-primary-foreground text-primary font-mono text-[10px] tracking-widest font-bold px-4 py-2.5 rounded transition-all cursor-pointer"
+          >
+            <PlusCircle className="size-3.5" />
+            NUEVA NOTICIA
+          </button>
+        </div>
 
-            {status === "success" && (
-              <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 p-4 rounded mb-6 font-mono text-xs uppercase tracking-wide text-left">
-                <CheckCircle2 className="size-5 shrink-0" />
-                <span>{statusMessage}</span>
-              </div>
-            )}
-            {status === "error" && (
-              <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/30 text-red-400 p-4 rounded mb-6 font-mono text-xs uppercase tracking-wide text-left">
-                <ShieldAlert className="size-5 shrink-0" />
-                <span>{statusMessage}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleUploadSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
-                {/* Título */}
-                <div className="space-y-1.5">
-                  <label className="font-mono text-[9px] tracking-wider text-foreground/50 uppercase font-bold">Título del Beat</label>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Ej. ICEFIELD BLUE"
-                    disabled={status === "loading"}
-                    className="w-full bg-zinc-900/50 border border-white/10 hover:border-white/20 focus:border-primary text-foreground font-mono text-xs p-3 rounded outline-none transition-colors"
-                    required
-                  />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {localNews.map((post) => (
+            <div 
+              key={post.id}
+              className="flex gap-4 p-4 rounded-lg bg-zinc-900/30 border border-white/5 hover:border-primary/20 transition-all text-left"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={post.image || "/images/featured.png"} alt="" className="w-24 h-20 object-cover rounded border border-white/5 bg-zinc-950 shrink-0" />
+              <div className="flex-1 min-w-0 flex flex-col justify-between font-mono text-[9.5px]">
+                <div>
+                  <div className="flex justify-between items-start gap-2">
+                    <h4 className="font-heading text-xs font-bold text-foreground uppercase truncate leading-tight">{post.title}</h4>
+                    <span className="text-primary font-bold uppercase tracking-wider text-[8px] border border-primary/20 px-1 py-0.5 rounded shrink-0">
+                      {post.tag}
+                    </span>
+                  </div>
+                  <p className="text-foreground/40 mt-1 line-clamp-2 leading-relaxed text-[8.5px]">{post.description}</p>
                 </div>
 
-                {/* Productor */}
-                <div className="space-y-1.5">
-                  <label className="font-mono text-[9px] tracking-wider text-foreground/50 uppercase font-bold">Productor</label>
-                  <input
-                    type="text"
-                    value={producer}
-                    onChange={(e) => setProducer(e.target.value)}
-                    placeholder="Ej. FRZN SOUND"
-                    disabled={status === "loading"}
-                    className="w-full bg-zinc-900/50 border border-white/10 hover:border-white/20 focus:border-primary text-foreground font-mono text-xs p-3 rounded outline-none transition-colors"
-                    required
-                  />
-                </div>
-
-                {/* Precio */}
-                <div className="space-y-1.5">
-                  <label className="font-mono text-[9px] tracking-wider text-foreground/50 uppercase font-bold">Precio Base ($)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    placeholder="29.99"
-                    disabled={status === "loading"}
-                    className="w-full bg-zinc-900/50 border border-white/10 hover:border-white/20 focus:border-primary text-foreground font-mono text-xs p-3 rounded outline-none transition-colors"
-                    required
-                  />
-                </div>
-
-                {/* BPM */}
-                <div className="space-y-1.5">
-                  <label className="font-mono text-[9px] tracking-wider text-foreground/50 uppercase font-bold">BPM</label>
-                  <input
-                    type="number"
-                    value={bpm}
-                    onChange={(e) => setBpm(e.target.value)}
-                    placeholder="140"
-                    disabled={status === "loading"}
-                    className="w-full bg-zinc-900/50 border border-white/10 hover:border-white/20 focus:border-primary text-foreground font-mono text-xs p-3 rounded outline-none transition-colors"
-                    required
-                  />
-                </div>
-
-                {/* Key */}
-                <div className="space-y-1.5">
-                  <label className="font-mono text-[9px] tracking-wider text-foreground/50 uppercase font-bold">Tonalidad (Key)</label>
-                  <input
-                    type="text"
-                    value={key}
-                    onChange={(e) => setKey(e.target.value)}
-                    placeholder="Ej. G# Minor"
-                    disabled={status === "loading"}
-                    className="w-full bg-zinc-900/50 border border-white/10 hover:border-white/20 focus:border-primary text-foreground font-mono text-xs p-3 rounded outline-none transition-colors"
-                    required
-                  />
-                </div>
-
-                {/* Tags */}
-                <div className="space-y-1.5">
-                  <label className="font-mono text-[9px] tracking-wider text-foreground/50 uppercase font-bold">Tags (Separados por comas)</label>
-                  <input
-                    type="text"
-                    value={tags}
-                    onChange={(e) => setTags(e.target.value)}
-                    placeholder="Ej. TRAP, NEON, 808"
-                    disabled={status === "loading"}
-                    className="w-full bg-zinc-900/50 border border-white/10 hover:border-white/20 focus:border-primary text-foreground font-mono text-xs p-3 rounded outline-none transition-colors"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Files */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
-                {/* Image File */}
-                <div className="space-y-1.5">
-                  <label className="font-mono text-[9px] tracking-wider text-foreground/50 uppercase font-bold">Imagen de Portada</label>
-                  <div className="relative group flex flex-col items-center justify-center border border-dashed border-white/10 hover:border-primary/50 bg-zinc-900/30 rounded-lg p-6 transition-colors text-center cursor-pointer min-h-[140px]">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                      disabled={status === "loading"}
-                      className="absolute inset-0 size-full opacity-0 cursor-pointer"
-                      required
+                <div className="flex justify-between items-center mt-3 pt-2 border-t border-white/5">
+                  {/* Interruptor Expuesto */}
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input 
+                      type="checkbox" 
+                      checked={post.expuesto} 
+                      onChange={() => handleToggle(post.id, "news", "expuesto")}
+                      className="sr-only peer"
                     />
-                    {imageFile ? (
-                      <div className="space-y-2">
-                        <ImageIcon className="size-8 text-primary mx-auto" />
-                        <p className="font-mono text-[10px] text-foreground font-bold truncate max-w-[200px]">{imageFile.name}</p>
-                        <p className="font-mono text-[8px] text-foreground/45 uppercase tracking-wide">{(imageFile.size / 1024 / 1024).toFixed(2)} MB</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <Upload className="size-8 text-foreground/40 mx-auto group-hover:text-primary transition-colors" />
-                        <p className="font-mono text-[10px] text-foreground/60">Seleccionar portada</p>
-                        <p className="font-mono text-[8px] text-foreground/30 uppercase tracking-wide">Cuadrada JPG/PNG</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                    <div className="w-7 h-4 bg-zinc-800 rounded-full peer peer-focus:ring-1 peer-focus:ring-primary peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-zinc-400 after:border-zinc-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary relative peer-checked:after:bg-foreground" />
+                    <span className="text-[8px] text-foreground/50 uppercase font-bold">EXPUESTO</span>
+                  </label>
 
-                {/* Audio File */}
-                <div className="space-y-1.5">
-                  <label className="font-mono text-[9px] tracking-wider text-foreground/50 uppercase font-bold">Archivo de Audio</label>
-                  <div className="relative group flex flex-col items-center justify-center border border-dashed border-white/10 hover:border-primary/50 bg-zinc-900/30 rounded-lg p-6 transition-colors text-center cursor-pointer min-h-[140px]">
-                    <input
-                      type="file"
-                      accept="audio/*"
-                      onChange={(e) => setAudioFile(e.target.files?.[0] || null)}
-                      disabled={status === "loading"}
-                      className="absolute inset-0 size-full opacity-0 cursor-pointer"
-                      required
-                    />
-                    {audioFile ? (
-                      <div className="space-y-2">
-                        <Music className="size-8 text-primary mx-auto" />
-                        <p className="font-mono text-[10px] text-foreground font-bold truncate max-w-[200px]">{audioFile.name}</p>
-                        <p className="font-mono text-[8px] text-foreground/45 uppercase tracking-wide">{(audioFile.size / 1024 / 1024).toFixed(2)} MB</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <Upload className="size-8 text-foreground/40 mx-auto group-hover:text-primary transition-colors" />
-                        <p className="font-mono text-[10px] text-foreground/60">Seleccionar beat de audio</p>
-                        <p className="font-mono text-[8px] text-foreground/30 uppercase tracking-wide">Formato MP3/WAV</p>
-                      </div>
-                    )}
-                  </div>
+                  <button
+                    onClick={() => openEditNews(post)}
+                    className="flex items-center gap-1.5 text-sky-400 hover:text-sky-300 transition-colors uppercase font-bold text-[8.5px]"
+                  >
+                    <Edit className="size-3" />
+                    EDITAR
+                  </button>
                 </div>
               </div>
-
-              {/* Submit */}
-              <div className="pt-2">
-                <button
-                  type="submit"
-                  disabled={status === "loading"}
-                  className="w-full flex items-center justify-center gap-2 border border-primary/30 bg-primary/5 hover:bg-primary hover:text-primary-foreground text-primary font-mono text-xs tracking-widest font-bold py-3.5 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed rounded"
-                >
-                  {status === "loading" ? (
-                    <>
-                      <Loader2 className="size-4 animate-spin" />
-                      {statusMessage}
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="size-4" />
-                      SUBIR BEAT AL CATÁLOGO
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        )
-      case "catalog":
-        return (
-          <div className="bg-zinc-950/45 border border-white/5 rounded-lg p-5 space-y-6 text-left">
-            <div className="border-b border-white/5 pb-3">
-              <h3 className="font-heading text-lg font-bold text-foreground uppercase">Catálogo de Música Activo</h3>
-              <p className="font-mono text-[9px] text-foreground/45 uppercase mt-1">Registros actuales en Google Sheets y Google Drive</p>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {allTracks.map((track) => (
-                <div 
-                  key={track.id} 
-                  className="flex gap-4 p-4 rounded-lg bg-zinc-900/30 border border-white/5 hover:border-primary/20 transition-colors"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={track.img} alt="" className="size-16 object-cover rounded border border-white/10 shrink-0 bg-black" />
-                  <div className="flex-1 min-w-0 flex flex-col justify-between font-mono text-[10px]">
-                    <div>
-                      <div className="flex items-center justify-between gap-2">
-                        <h4 className="font-heading text-xs font-bold text-foreground truncate uppercase">{track.title}</h4>
-                        <span className="text-emerald-400 font-bold shrink-0">{track.price}</span>
-                      </div>
-                      <p className="text-foreground/40 uppercase mt-0.5 text-[8px]">{track.producer}</p>
-                      <div className="flex items-center gap-3 text-[8px] text-foreground/40 mt-1.5">
-                        <span>{track.bpm} BPM</span>
-                        <span>•</span>
-                        <span>{track.key}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-4 mt-2 border-t border-white/5 pt-2 text-[8px] text-primary font-bold">
-                      <a href={track.audioUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:underline">
-                        AUDIO <ExternalLink className="size-2.5" />
-                      </a>
-                      <a href={track.img} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:underline">
-                        PORTADA <ExternalLink className="size-2.5" />
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )
-    }
+          ))}
+        </div>
+      </div>
+    )
   }
 
-  // Render Access protection
+  // Render Pestaña Biblioteca de Beats
+  const renderCatalogTab = () => {
+    return (
+      <div className="space-y-6 text-left">
+        <div className="border-b border-white/5 pb-3">
+          <h3 className="font-heading text-lg font-bold text-foreground uppercase">Gestión de Catálogo de Beats</h3>
+          <p className="font-mono text-[9px] text-foreground/45 uppercase mt-1">Habilita secciones y edita metadata o archivos</p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {localTracks.map((track) => (
+            <div 
+              key={track.id} 
+              className="flex flex-col md:flex-row gap-4 p-4 rounded-lg bg-zinc-900/30 border border-white/5 hover:border-primary/20 transition-all text-left"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={track.img} alt="" className="size-20 object-cover rounded border border-white/10 shrink-0 bg-black mx-auto md:mx-0" />
+              
+              <div className="flex-1 min-w-0 flex flex-col justify-between font-mono text-[9.5px]">
+                <div>
+                  <div className="flex justify-between items-start gap-2">
+                    <h4 className="font-heading text-xs font-bold text-foreground truncate uppercase">{track.title}</h4>
+                    <span className="text-emerald-400 font-bold shrink-0">{track.price}</span>
+                  </div>
+                  <p className="text-foreground/40 mt-0.5 text-[8.5px] uppercase">{track.producer}</p>
+                  
+                  <div className="flex items-center gap-3 text-[8.5px] text-foreground/40 mt-1.5">
+                    <span>{track.bpm} BPM</span>
+                    <span>•</span>
+                    <span>{track.key}</span>
+                  </div>
+                </div>
+
+                {/* Toggles y Botón de Edición */}
+                <div className="flex flex-wrap justify-between items-center gap-3 mt-4 pt-3 border-t border-white/5">
+                  <div className="flex gap-4">
+                    {/* Toggle Expuesto */}
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={track.expuesto !== false}
+                        onChange={() => handleToggle(track.id, "beats", "expuesto")}
+                        className="sr-only peer"
+                      />
+                      <div className="w-6 h-3 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-3 after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-zinc-500 after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:bg-primary relative" />
+                      <span className="text-[7.5px] text-foreground/50 uppercase font-bold">EXPUESTO</span>
+                    </label>
+
+                    {/* Toggle Tendencias */}
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={track.tendencia !== false}
+                        onChange={() => handleToggle(track.id, "beats", "tendencia")}
+                        className="sr-only peer"
+                      />
+                      <div className="w-6 h-3 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-3 after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-zinc-500 after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:bg-primary relative" />
+                      <span className="text-[7.5px] text-foreground/50 uppercase font-bold">TENDENCIA</span>
+                    </label>
+
+                    {/* Toggle Dropeados */}
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={track.dropeado === true}
+                        onChange={() => handleToggle(track.id, "beats", "dropeado")}
+                        className="sr-only peer"
+                      />
+                      <div className="w-6 h-3 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-3 after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-zinc-500 after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:bg-primary relative" />
+                      <span className="text-[7.5px] text-foreground/50 uppercase font-bold">DROP</span>
+                    </label>
+                  </div>
+
+                  <button
+                    onClick={() => openEditBeatModal(track)}
+                    className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors uppercase font-bold text-[8.5px]"
+                  >
+                    <Edit className="size-3" />
+                    EDITAR
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  // Render Access control check
   const renderAccessView = () => {
     if (!user) {
       return (
@@ -664,6 +652,7 @@ export default function AdminPage() {
 
     return (
       <div className="max-w-[1200px] mx-auto py-12 px-6 space-y-8">
+        
         {/* Encabezado del Dashboard */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/10 pb-6">
           <div className="text-left">
@@ -676,7 +665,6 @@ export default function AdminPage() {
             </p>
           </div>
 
-          {/* Botón Refrescar Estadísticas */}
           <button
             onClick={fetchStats}
             disabled={loadingStats}
@@ -688,10 +676,10 @@ export default function AdminPage() {
         </div>
 
         {/* Barra de Pestañas (Tabs) */}
-        <div className="flex border-b border-white/5 gap-2">
+        <div className="flex border-b border-white/5 gap-2 overflow-x-auto scrollbar-none">
           <button
-            onClick={() => setActiveTab("stats")}
-            className={`flex items-center gap-2 font-mono text-[10px] tracking-widest font-bold px-5 py-3.5 border-b-2 transition-all cursor-pointer ${
+            onClick={() => { setActiveTab("stats"); setStatus("idle"); }}
+            className={`flex items-center gap-2 font-mono text-[10px] tracking-widest font-bold px-5 py-3.5 border-b-2 transition-all cursor-pointer shrink-0 ${
               activeTab === "stats"
                 ? "border-primary text-primary bg-primary/5"
                 : "border-transparent text-foreground/60 hover:text-foreground hover:bg-white/5"
@@ -701,8 +689,8 @@ export default function AdminPage() {
             ESTADÍSTICAS
           </button>
           <button
-            onClick={() => setActiveTab("upload")}
-            className={`flex items-center gap-2 font-mono text-[10px] tracking-widest font-bold px-5 py-3.5 border-b-2 transition-all cursor-pointer ${
+            onClick={() => { setActiveTab("upload"); setStatus("idle"); }}
+            className={`flex items-center gap-2 font-mono text-[10px] tracking-widest font-bold px-5 py-3.5 border-b-2 transition-all cursor-pointer shrink-0 ${
               activeTab === "upload"
                 ? "border-primary text-primary bg-primary/5"
                 : "border-transparent text-foreground/60 hover:text-foreground hover:bg-white/5"
@@ -712,20 +700,542 @@ export default function AdminPage() {
             SUBIR BEAT
           </button>
           <button
-            onClick={() => setActiveTab("catalog")}
-            className={`flex items-center gap-2 font-mono text-[10px] tracking-widest font-bold px-5 py-3.5 border-b-2 transition-all cursor-pointer ${
+            onClick={() => { setActiveTab("catalog"); setStatus("idle"); }}
+            className={`flex items-center gap-2 font-mono text-[10px] tracking-widest font-bold px-5 py-3.5 border-b-2 transition-all cursor-pointer shrink-0 ${
               activeTab === "catalog"
                 ? "border-primary text-primary bg-primary/5"
                 : "border-transparent text-foreground/60 hover:text-foreground hover:bg-white/5"
             }`}
           >
             <Library className="size-3.5" />
-            BIBLIOTECA ({tracks.length})
+            BIBLIOTECA ({localTracks.length})
+          </button>
+          <button
+            onClick={() => { setActiveTab("news"); setStatus("idle"); }}
+            className={`flex items-center gap-2 font-mono text-[10px] tracking-widest font-bold px-5 py-3.5 border-b-2 transition-all cursor-pointer shrink-0 ${
+              activeTab === "news"
+                ? "border-primary text-primary bg-primary/5"
+                : "border-transparent text-foreground/60 hover:text-foreground hover:bg-white/5"
+            }`}
+          >
+            <Megaphone className="size-3.5" />
+            NOTICIAS ({localNews.length})
           </button>
         </div>
 
+        {/* Notificaciones de carga / exito / error */}
+        {activeTab !== "upload" && !showNewsModal && !editingBeat && (
+          <>
+            {status === "success" && (
+              <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 p-4 rounded text-left font-mono text-xs uppercase tracking-wide">
+                <CheckCircle2 className="size-5 shrink-0" />
+                <span>{statusMessage}</span>
+              </div>
+            )}
+            {status === "error" && (
+              <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/30 text-red-400 p-4 rounded text-left font-mono text-xs uppercase tracking-wide">
+                <ShieldAlert className="size-5 shrink-0" />
+                <span>{statusMessage}</span>
+              </div>
+            )}
+            {status === "loading" && (
+              <div className="flex items-center gap-3 bg-primary/5 border border-primary/20 text-primary p-4 rounded text-left font-mono text-xs uppercase tracking-wide">
+                <Loader2 className="size-5 animate-spin shrink-0" />
+                <span>{statusMessage}</span>
+              </div>
+            )}
+          </>
+        )}
+
         {/* Contenido Pestaña Activa */}
-        <div>{renderTabContent()}</div>
+        <div>
+          {activeTab === "stats" && (
+            <div className="space-y-8">
+              {/* Tarjetas Métricas */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-lg text-left relative overflow-hidden group hover:border-primary/20 transition-all">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1">
+                      <span className="font-mono text-[9px] tracking-wider text-foreground/45 uppercase font-bold">Usuarios Registrados</span>
+                      <h3 className="text-3xl font-heading font-black text-foreground">
+                        {loadingStats ? <Loader2 className="size-6 animate-spin text-primary" /> : stats?.totalUsers || 0}
+                      </h3>
+                    </div>
+                    <div className="size-10 rounded bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                      <Users className="size-5" />
+                    </div>
+                  </div>
+                  <div className="absolute bottom-0 inset-x-0 h-0.5 bg-gradient-to-r from-primary to-transparent opacity-50" />
+                </div>
+
+                <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-lg text-left relative overflow-hidden group hover:border-primary/20 transition-all">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1">
+                      <span className="font-mono text-[9px] tracking-wider text-foreground/45 uppercase font-bold">Carrito Activo (Items)</span>
+                      <h3 className="text-3xl font-heading font-black text-foreground">
+                        {loadingStats ? <Loader2 className="size-6 animate-spin text-primary" /> : stats?.totalCartItems || 0}
+                      </h3>
+                    </div>
+                    <div className="size-10 rounded bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                      <ShoppingBag className="size-5" />
+                    </div>
+                  </div>
+                  <div className="absolute bottom-0 inset-x-0 h-0.5 bg-gradient-to-r from-primary to-transparent opacity-50" />
+                </div>
+
+                <div className="bg-zinc-900/30 border border-white/5 p-6 rounded-lg text-left relative overflow-hidden group hover:border-primary/20 transition-all">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1">
+                      <span className="font-mono text-[9px] tracking-wider text-foreground/45 uppercase font-bold">Beats en Catálogo</span>
+                      <h3 className="text-3xl font-heading font-black text-foreground">
+                        {localTracks.length}
+                      </h3>
+                    </div>
+                    <div className="size-10 rounded bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                      <Music className="size-5" />
+                    </div>
+                  </div>
+                  <div className="absolute bottom-0 inset-x-0 h-0.5 bg-gradient-to-r from-primary to-transparent opacity-50" />
+                </div>
+              </div>
+
+              {statsError && (
+                <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/30 text-red-400 p-4 rounded font-mono text-xs uppercase tracking-wide">
+                  <ShieldAlert className="size-5 shrink-0" />
+                  <span>{statsError}</span>
+                </div>
+              )}
+
+              {/* Tablas */}
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 text-left">
+                {/* Tabla Usuarios */}
+                <div className="xl:col-span-5 bg-zinc-950/45 border border-white/5 rounded-lg p-5 space-y-4">
+                  <div className="border-b border-white/5 pb-3">
+                    <h4 className="font-heading text-xs font-bold text-foreground uppercase tracking-widest">Últimos Usuarios Registrados</h4>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full font-mono text-[10px]">
+                      <thead>
+                        <tr className="border-b border-white/5 text-foreground/40 text-left">
+                          <th className="pb-2 font-bold uppercase">Perfil</th>
+                          <th className="pb-2 font-bold uppercase">Nombre</th>
+                          <th className="pb-2 font-bold uppercase">Email</th>
+                          <th className="pb-2 font-bold uppercase hidden sm:table-cell">Fecha</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {stats && stats.users.length > 0 ? (
+                          stats.users.map((u) => (
+                            <tr key={u.id} className="hover:bg-white/5 transition-colors">
+                              <td className="py-2.5">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={u.picture} alt="" className="size-6 rounded-full border border-white/10" referrerPolicy="no-referrer" />
+                              </td>
+                              <td className="py-2.5 font-bold text-foreground truncate max-w-[100px]">{u.name}</td>
+                              <td className="py-2.5 text-foreground/75 truncate max-w-[120px]">{u.email}</td>
+                              <td className="py-2.5 text-foreground/40 hidden sm:table-cell">{formatDate(u.dateAdded)}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={4} className="py-6 text-center text-foreground/30">
+                              {loadingStats ? "Cargando usuarios..." : "No hay usuarios registrados aún."}
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Tabla Carritos */}
+                <div className="xl:col-span-7 bg-zinc-950/45 border border-white/5 rounded-lg p-5 space-y-4">
+                  <div className="border-b border-white/5 pb-3">
+                    <h4 className="font-heading text-xs font-bold text-foreground uppercase tracking-widest">Ítems en Carritos Activos</h4>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full font-mono text-[10px]">
+                      <thead>
+                        <tr className="border-b border-white/5 text-foreground/40 text-left">
+                          <th className="pb-2 font-bold uppercase">Usuario</th>
+                          <th className="pb-2 font-bold uppercase">Beat (Track)</th>
+                          <th className="pb-2 font-bold uppercase">Licencia</th>
+                          <th className="pb-2 font-bold uppercase">Precio</th>
+                          <th className="pb-2 font-bold uppercase hidden sm:table-cell text-center">Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {stats && stats.cartItems.length > 0 ? (
+                          stats.cartItems.map((item, idx) => (
+                            <tr key={idx} className="hover:bg-white/5 transition-colors">
+                              <td className="py-2.5 text-foreground/80 truncate max-w-[140px] font-bold">{item.email}</td>
+                              <td className="py-2.5 text-primary uppercase font-bold truncate max-w-[150px]">{item.title}</td>
+                              <td className="py-2.5 uppercase text-foreground/50">{item.licenseType}</td>
+                              <td className="py-2.5 text-emerald-400 font-bold">${item.price.toFixed(2)}</td>
+                              <td className="py-2.5 hidden sm:table-cell text-center">
+                                {item.selected ? (
+                                  <span className="bg-emerald-500/10 text-emerald-400 text-[8px] font-bold px-1.5 py-0.5 rounded border border-emerald-500/20">LISTO</span>
+                                ) : (
+                                  <span className="bg-zinc-500/10 text-zinc-400 text-[8px] px-1.5 py-0.5 rounded border border-zinc-500/20">PAUSADO</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={5} className="py-6 text-center text-foreground/30">
+                              {loadingStats ? "Cargando carritos..." : "No hay beats en carritos actualmente."}
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "upload" && (
+            <div className="bg-zinc-950/45 border border-white/5 rounded-lg p-6 max-w-2xl mx-auto">
+              <div className="border-b border-white/5 pb-4 mb-6 text-left">
+                <h3 className="font-heading text-lg font-bold text-foreground uppercase">Formulario de Carga</h3>
+                <p className="font-mono text-[9px] text-foreground/45 uppercase mt-1">Sube audio y foto de portada directamente a Google Drive</p>
+              </div>
+
+              {status === "success" && (
+                <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 p-4 rounded mb-6 font-mono text-xs uppercase tracking-wide text-left">
+                  <CheckCircle2 className="size-5 shrink-0" />
+                  <span>{statusMessage}</span>
+                </div>
+              )}
+              {status === "error" && (
+                <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/30 text-red-400 p-4 rounded mb-6 font-mono text-xs uppercase tracking-wide text-left">
+                  <ShieldAlert className="size-5 shrink-0" />
+                  <span>{statusMessage}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleUploadSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+                  <div className="space-y-1.5">
+                    <label className="font-mono text-[9px] tracking-wider text-foreground/50 uppercase font-bold">Título del Beat</label>
+                    <input
+                      type="text"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="Ej. ICEFIELD BLUE"
+                      className="w-full bg-zinc-900/50 border border-white/10 hover:border-white/20 focus:border-primary text-foreground font-mono text-xs p-3 rounded outline-none"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-mono text-[9px] tracking-wider text-foreground/50 uppercase font-bold">Productor</label>
+                    <input
+                      type="text"
+                      value={producer}
+                      onChange={(e) => setProducer(e.target.value)}
+                      placeholder="Ej. FRZN SOUND"
+                      className="w-full bg-zinc-900/50 border border-white/10 hover:border-white/20 focus:border-primary text-foreground font-mono text-xs p-3 rounded outline-none"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-mono text-[9px] tracking-wider text-foreground/50 uppercase font-bold">Precio Base ($)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      placeholder="29.99"
+                      className="w-full bg-zinc-900/50 border border-white/10 hover:border-white/20 focus:border-primary text-foreground font-mono text-xs p-3 rounded outline-none"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-mono text-[9px] tracking-wider text-foreground/50 uppercase font-bold">BPM</label>
+                    <input
+                      type="number"
+                      value={bpm}
+                      onChange={(e) => setBpm(e.target.value)}
+                      placeholder="140"
+                      className="w-full bg-zinc-900/50 border border-white/10 hover:border-white/20 focus:border-primary text-foreground font-mono text-xs p-3 rounded outline-none"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-mono text-[9px] tracking-wider text-foreground/50 uppercase font-bold">Tonalidad (Key)</label>
+                    <input
+                      type="text"
+                      value={key}
+                      onChange={(e) => setKey(e.target.value)}
+                      placeholder="Ej. G# Minor"
+                      className="w-full bg-zinc-900/50 border border-white/10 hover:border-white/20 focus:border-primary text-foreground font-mono text-xs p-3 rounded outline-none"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-mono text-[9px] tracking-wider text-foreground/50 uppercase font-bold">Tags (Separados por comas)</label>
+                    <input
+                      type="text"
+                      value={tags}
+                      onChange={(e) => setTags(e.target.value)}
+                      placeholder="Ej. TRAP, NEON, 808"
+                      className="w-full bg-zinc-900/50 border border-white/10 hover:border-white/20 focus:border-primary text-foreground font-mono text-xs p-3 rounded outline-none"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Exposición Toggles de Carga */}
+                <div className="grid grid-cols-3 gap-4 border border-white/5 p-4 rounded-lg bg-zinc-900/20 text-left font-mono text-[10px]">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={expuestoCheck} onChange={(e) => setExpuestoCheck(e.target.checked)} className="rounded border-white/10 bg-zinc-900 text-primary focus:ring-primary" />
+                    <span>EXPUESTO (WEB)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={tendenciaCheck} onChange={(e) => setTendenciaCheck(e.target.checked)} className="rounded border-white/10 bg-zinc-900 text-primary focus:ring-primary" />
+                    <span>TENDENCIAS</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={dropeadoCheck} onChange={(e) => setDropeadoCheck(e.target.checked)} className="rounded border-white/10 bg-zinc-900 text-primary focus:ring-primary" />
+                    <span>RECIÉN DROPEADO</span>
+                  </label>
+                </div>
+
+                {/* File selectors */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+                  <div className="space-y-1.5">
+                    <label className="font-mono text-[9px] tracking-wider text-foreground/50 uppercase font-bold">Imagen de Portada</label>
+                    <div className="relative group flex flex-col items-center justify-center border border-dashed border-white/10 hover:border-primary/50 bg-zinc-900/30 rounded-lg p-6 transition-colors text-center cursor-pointer min-h-[140px]">
+                      <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] || null)} className="absolute inset-0 size-full opacity-0 cursor-pointer" required />
+                      {imageFile ? (
+                        <div className="space-y-2">
+                          <ImageIcon className="size-8 text-primary mx-auto" />
+                          <p className="font-mono text-[10px] text-foreground font-bold truncate max-w-[200px]">{imageFile.name}</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Upload className="size-8 text-foreground/40 mx-auto group-hover:text-primary transition-colors" />
+                          <p className="font-mono text-[10px] text-foreground/60">Seleccionar portada</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-mono text-[9px] tracking-wider text-foreground/50 uppercase font-bold">Archivo de Audio</label>
+                    <div className="relative group flex flex-col items-center justify-center border border-dashed border-white/10 hover:border-primary/50 bg-zinc-900/30 rounded-lg p-6 transition-colors text-center cursor-pointer min-h-[140px]">
+                      <input type="file" accept="audio/*" onChange={(e) => setAudioFile(e.target.files?.[0] || null)} className="absolute inset-0 size-full opacity-0 cursor-pointer" required />
+                      {audioFile ? (
+                        <div className="space-y-2">
+                          <Music className="size-8 text-primary mx-auto" />
+                          <p className="font-mono text-[10px] text-foreground font-bold truncate max-w-[200px]">{audioFile.name}</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Upload className="size-8 text-foreground/40 mx-auto group-hover:text-primary transition-colors" />
+                          <p className="font-mono text-[10px] text-foreground/60">Seleccionar instrumental</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={status === "loading"}
+                    className="w-full flex items-center justify-center gap-2 border border-primary/30 bg-primary/5 hover:bg-primary hover:text-primary-foreground text-primary font-mono text-xs tracking-widest font-bold py-3.5 transition-all cursor-pointer disabled:opacity-50 rounded"
+                  >
+                    {status === "loading" ? (
+                      <>
+                        <Loader2 className="size-4 animate-spin" />
+                        {statusMessage}
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="size-4" />
+                        SUBIR BEAT AL CATÁLOGO
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {activeTab === "catalog" && renderCatalogTab()}
+          {activeTab === "news" && renderNewsTab()}
+        </div>
+
+        {/* MODAL DE EDICIÓN DE BEATS */}
+        {editingBeat && (
+          <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+            <div className="relative w-full max-w-2xl bg-zinc-950/95 border border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+              
+              <button onClick={() => setEditingBeat(null)} className="absolute top-4.5 right-4.5 z-10 flex size-9 items-center justify-center rounded-full bg-black/60 border border-white/10 text-foreground/80 hover:text-foreground hover:border-primary transition-all cursor-pointer">
+                <X className="size-4" />
+              </button>
+
+              <div className="p-6 md:p-8 overflow-y-auto space-y-6 scrollbar-none text-left">
+                <div className="border-b border-white/5 pb-3">
+                  <h3 className="font-heading text-lg font-black text-foreground uppercase">Editar Beat Existente</h3>
+                  <p className="font-mono text-[9px] text-foreground/45 uppercase mt-1">ID: {editingBeat.id}</p>
+                </div>
+
+                <form onSubmit={handleEditBeatSubmit} className="space-y-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="font-mono text-[8px] text-foreground/50 uppercase font-bold">Título</label>
+                      <input type="text" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} className="w-full bg-zinc-900 border border-white/10 p-2.5 rounded text-xs font-mono text-foreground" required />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="font-mono text-[8px] text-foreground/50 uppercase font-bold">Productor</label>
+                      <input type="text" value={editProducer} onChange={(e) => setEditProducer(e.target.value)} className="w-full bg-zinc-900 border border-white/10 p-2.5 rounded text-xs font-mono text-foreground" required />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="font-mono text-[8px] text-foreground/50 uppercase font-bold">Precio ($)</label>
+                      <input type="number" step="0.01" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} className="w-full bg-zinc-900 border border-white/10 p-2.5 rounded text-xs font-mono text-foreground" required />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="font-mono text-[8px] text-foreground/50 uppercase font-bold">BPM</label>
+                      <input type="number" value={editBpm} onChange={(e) => setEditBpm(e.target.value)} className="w-full bg-zinc-900 border border-white/10 p-2.5 rounded text-xs font-mono text-foreground" required />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="font-mono text-[8px] text-foreground/50 uppercase font-bold">Tonalidad (Key)</label>
+                      <input type="text" value={editKey} onChange={(e) => setEditKey(e.target.value)} className="w-full bg-zinc-900 border border-white/10 p-2.5 rounded text-xs font-mono text-foreground" required />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="font-mono text-[8px] text-foreground/50 uppercase font-bold">Tags (separados por comas)</label>
+                      <input type="text" value={editTags} onChange={(e) => setEditTags(e.target.value)} className="w-full bg-zinc-900 border border-white/10 p-2.5 rounded text-xs font-mono text-foreground" required />
+                    </div>
+                  </div>
+
+                  {/* Secciones Checkboxes de Edición */}
+                  <div className="grid grid-cols-3 gap-4 border border-white/5 p-4 rounded-lg bg-zinc-900/20 font-mono text-[9px]">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={editExpuesto} onChange={(e) => setEditExpuesto(e.target.checked)} className="rounded border-white/10 bg-zinc-900 text-primary" />
+                      <span>EXPUESTO (WEB)</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={editTendencia} onChange={(e) => setEditTendencia(e.target.checked)} className="rounded border-white/10 bg-zinc-900 text-primary" />
+                      <span>TENDENCIA</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={editDropeado} onChange={(e) => setEditDropeado(e.target.checked)} className="rounded border-white/10 bg-zinc-900 text-primary" />
+                      <span>DROPEADO</span>
+                    </label>
+                  </div>
+
+                  {/* Carga de Nueva Portada (Opcional) */}
+                  <div className="space-y-1.5">
+                    <label className="font-mono text-[8px] text-foreground/50 uppercase font-bold">Reemplazar Imagen de Portada (Opcional)</label>
+                    <div className="relative flex items-center justify-center border border-dashed border-white/10 hover:border-primary/50 bg-zinc-900/20 p-4 rounded text-center cursor-pointer">
+                      <input type="file" accept="image/*" onChange={(e) => setEditImageFile(e.target.files?.[0] || null)} className="absolute inset-0 size-full opacity-0 cursor-pointer" />
+                      <span className="font-mono text-[9px] text-foreground/60 flex items-center gap-2">
+                        <ImageIcon className="size-4 text-primary" />
+                        {editImageFile ? editImageFile.name : "Seleccionar nuevo archivo de portada para reemplazar"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 flex gap-4">
+                    <button type="submit" disabled={status === "loading"} className="flex-1 flex items-center justify-center gap-2 bg-primary text-primary-foreground font-mono text-[10px] tracking-widest font-bold py-3.5 rounded cursor-pointer disabled:opacity-50">
+                      {status === "loading" ? <Loader2 className="size-4 animate-spin" /> : "GUARDAR CAMBIOS"}
+                    </button>
+                    <button type="button" onClick={() => setEditingBeat(null)} className="border border-white/10 hover:bg-white/5 font-mono text-[10px] tracking-widest font-bold px-6 rounded cursor-pointer">
+                      CANCELAR
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL CREAR / EDITAR NOTICIAS */}
+        {showNewsModal && (
+          <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+            <div className="relative w-full max-w-2xl bg-zinc-950/95 border border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+              
+              <button onClick={() => setShowNewsModal(false)} className="absolute top-4.5 right-4.5 z-10 flex size-9 items-center justify-center rounded-full bg-black/60 border border-white/10 text-foreground/80 hover:text-foreground hover:border-primary transition-all cursor-pointer">
+                <X className="size-4" />
+              </button>
+
+              <div className="p-6 md:p-8 overflow-y-auto space-y-6 scrollbar-none text-left">
+                <div className="border-b border-white/5 pb-3">
+                  <h3 className="font-heading text-lg font-black text-foreground uppercase">
+                    {editingNews ? "Editar Noticia o Aviso" : "Publicar Nueva Noticia / Aviso"}
+                  </h3>
+                  <p className="font-mono text-[9px] text-foreground/45 uppercase mt-1">Completa los campos para actualizar la sección de novedades</p>
+                </div>
+
+                <form onSubmit={handleNewsSubmit} className="space-y-4 font-mono text-[10px]">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-foreground/50 uppercase font-bold text-[8px]">Título del Aviso</label>
+                      <input type="text" value={newsTitle} onChange={(e) => setNewsTitle(e.target.value)} className="w-full bg-zinc-900 border border-white/10 p-2.5 rounded text-xs text-foreground" required />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-foreground/50 uppercase font-bold text-[8px]">Categoría (Tag)</label>
+                      <input type="text" value={newsTag} onChange={(e) => setNewsTag(e.target.value)} placeholder="Ej. NUEVO DROPEO, OFERTA, TUTORIAL" className="w-full bg-zinc-900 border border-white/10 p-2.5 rounded text-xs text-foreground" required />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-foreground/50 uppercase font-bold text-[8px]">Resumen Breve (Summary)</label>
+                    <input type="text" value={newsDescription} onChange={(e) => setNewsDescription(e.target.value)} placeholder="Ej. Breve sumario de una línea que aparece en la tarjeta..." className="w-full bg-zinc-900 border border-white/10 p-2.5 rounded text-xs text-foreground" required />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-foreground/50 uppercase font-bold text-[8px]">Detalle Completo (Cuerpo del Comunicado)</label>
+                    <textarea rows={4} value={newsContent} onChange={(e) => setNewsContent(e.target.value)} placeholder="Escribe el cuerpo completo de la noticia aquí..." className="w-full bg-zinc-900 border border-white/10 p-2.5 rounded text-xs text-foreground outline-none resize-none" required />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-foreground/50 uppercase font-bold text-[8px]">Enlace de Redirección (Link / Opcional)</label>
+                    <input type="url" value={newsLink} onChange={(e) => setNewsLink(e.target.value)} placeholder="Ej. https://url-de-compra.com o /#releases" className="w-full bg-zinc-900 border border-white/10 p-2.5 rounded text-xs text-foreground" />
+                  </div>
+
+                  {/* Imagen y Exposición */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                    <div className="space-y-1.5">
+                      <label className="text-foreground/50 uppercase font-bold text-[8px]">Banner de Imagen (JPG/PNG)</label>
+                      <div className="relative flex items-center justify-center border border-dashed border-white/10 hover:border-primary/50 bg-zinc-900/20 p-3 rounded text-center cursor-pointer">
+                        <input type="file" accept="image/*" onChange={(e) => setNewsImageFile(e.target.files?.[0] || null)} className="absolute inset-0 size-full opacity-0 cursor-pointer" />
+                        <span className="text-[9px] text-foreground/60 flex items-center gap-1.5">
+                          <ImageIcon className="size-4 text-primary" />
+                          {newsImageFile ? newsImageFile.name : (editingNews ? "Cambiar Imagen Actual" : "Seleccionar imagen")}
+                        </span>
+                      </div>
+                    </div>
+
+                    <label className="flex items-center gap-2 cursor-pointer justify-end font-mono">
+                      <input type="checkbox" checked={newsExpuesto} onChange={(e) => setNewsExpuesto(e.target.checked)} className="rounded border-white/10 bg-zinc-900 text-primary" />
+                      <span>VISIBILIDAD ACTIVA (EXPUESTO)</span>
+                    </label>
+                  </div>
+
+                  <div className="pt-4 flex gap-4">
+                    <button type="submit" disabled={status === "loading"} className="flex-1 flex items-center justify-center gap-2 bg-primary text-primary-foreground font-mono text-[10px] tracking-widest font-bold py-3.5 rounded cursor-pointer disabled:opacity-50">
+                      {status === "loading" ? <Loader2 className="size-4 animate-spin" /> : (editingNews ? "GUARDAR CAMBIOS" : "PUBLICAR NOTICIA")}
+                    </button>
+                    <button type="button" onClick={() => setShowNewsModal(false)} className="border border-white/10 hover:bg-white/5 font-mono text-[10px] tracking-widest font-bold px-6 rounded cursor-pointer">
+                      CANCELAR
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     )
   }
