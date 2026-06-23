@@ -11,13 +11,7 @@ declare global {
   }
 }
 
-const NAV = [
-  { label: "FEED", char: "↘" },
-  { label: "TRACKS (BEATS)", char: "↘" },
-  { label: "LICENCIAS", char: "↘" },
-  { label: "SOUND KITS", char: "↘" },
-  { label: "SERVICIOS", char: "↘" },
-]
+const NAV: { label: string; char: string }[] = []
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false)
