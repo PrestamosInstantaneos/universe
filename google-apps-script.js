@@ -848,12 +848,19 @@ function doPost(e) {
         logoUrl = "https://lh3.googleusercontent.com/d/" + imgFile.getId();
       }
       
-      var settingsToSave = {
-        "logoUrl": logoUrl,
-        "paypalEmail": data.paypalEmail || "",
-        "binanceId": data.binanceId || "",
-        "zinliPhone": data.zinliPhone || ""
-      };
+      var settingsToSave = {};
+      if (data.existingLogo !== undefined || (data.imageData && data.imageMime && folderId)) {
+        settingsToSave["logoUrl"] = logoUrl;
+      }
+      if (data.paypalEmail !== undefined) {
+        settingsToSave["paypalEmail"] = data.paypalEmail;
+      }
+      if (data.binanceId !== undefined) {
+        settingsToSave["binanceId"] = data.binanceId;
+      }
+      if (data.zinliPhone !== undefined) {
+        settingsToSave["zinliPhone"] = data.zinliPhone;
+      }
       
       var range = settingsSheet.getDataRange();
       var values = range.getValues();

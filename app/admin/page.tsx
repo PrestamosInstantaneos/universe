@@ -576,7 +576,10 @@ export default function AdminPage() {
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({
           action: "updateSettings",
-          existingLogo: ""
+          existingLogo: "",
+          paypalEmail: localPaypalEmail,
+          binanceId: localBinanceId,
+          zinliPhone: localZinliPhone
         })
       })
 

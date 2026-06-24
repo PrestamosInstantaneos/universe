@@ -6,14 +6,22 @@ import { useCart, Track } from "./cart-context"
 
 export function NewCollection() {
   const { tracks, openLicenseModal } = useCart()
-  const tripledTracks = [...tracks, ...tracks, ...tracks]
+  
+  // Para el carrusel infinito continuo de Ruleta
+  const minItems = 15
+  const repeatCount = Math.max(3, Math.ceil(minItems / (tracks.length || 1)))
+  const repeatedTracks: Track[] = []
+  if (tracks.length > 0) {
+    for (let i = 0; i < repeatCount; i++) {
+      repeatedTracks.push(...tracks)
+    }
+  }
   
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null)
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
 
   // Estados del carrusel interactivo continuo
   const [isDraggingContainer, setIsDraggingContainer] = useState<boolean>(false)
-  const [isHovering, setIsHovering] = useState<boolean>(false)
   const [isPaused, setIsPaused] = useState<boolean>(false)
 
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -43,7 +51,7 @@ export function NewCollection() {
     }
   }, [])
 
-  // Inicializar scrollLeft al centro (en la segunda tanda de 3) para permitir loop infinito bidireccional
+  // Inicializar scrollLeft al centro (en la tanda intermedia) para permitir loop infinito bidireccional
   useEffect(() => {
     const container = scrollRef.current
     if (!container || tracks.length === 0) return
@@ -51,13 +59,14 @@ export function NewCollection() {
     // Esperar a que rendericen las tarjetas
     const initScroll = () => {
       const originalWidth = tracks.length * 244
-      container.scrollLeft = originalWidth
+      const middleOffset = Math.floor(repeatCount / 2)
+      container.scrollLeft = originalWidth * middleOffset
     }
 
     // Retraso mínimo para asegurar el render inicial de las portadas
     const timer = setTimeout(initScroll, 50)
     return () => clearTimeout(timer)
-  }, [tracks])
+  }, [tracks, repeatCount])
 
   // Lógica de loop infinito al hacer scroll manual o drag
   const handleScroll = () => {
@@ -65,11 +74,11 @@ export function NewCollection() {
     if (!container || tracks.length === 0) return
     const originalWidth = tracks.length * 244
 
-    // Si pasamos del final de la segunda tanda, volvemos a la primera tanda
-    if (container.scrollLeft >= originalWidth * 2) {
+    // Si pasamos del final de la tanda, volvemos al inicio de la tanda
+    if (container.scrollLeft >= originalWidth * (repeatCount - 1)) {
       container.scrollLeft = container.scrollLeft - originalWidth
     } 
-    // Si bajamos del inicio de la segunda tanda, saltamos a la segunda
+    // Si bajamos de la primera tanda, saltamos adelante
     else if (container.scrollLeft <= originalWidth) {
       container.scrollLeft = container.scrollLeft + originalWidth
     }
@@ -84,10 +93,10 @@ export function NewCollection() {
     const originalWidth = tracks.length * 244
 
     const step = () => {
-      // Avanzar lentamente hacia la izquierda si no hay interferencia del usuario
-      if (!isPaused && !isHovering && !isDraggingContainer) {
+      // Avanzar lentamente hacia la izquierda si no hay interferencia del usuario (nunca se detiene por hover)
+      if (!isPaused && !isDraggingContainer) {
         let nextScroll = container.scrollLeft + 0.65 // 0.65px por frame
-        if (nextScroll >= originalWidth * 2) {
+        if (nextScroll >= originalWidth * (repeatCount - 1)) {
           nextScroll = nextScroll - originalWidth
         }
         container.scrollLeft = nextScroll
@@ -99,7 +108,7 @@ export function NewCollection() {
     return () => {
       cancelAnimationFrame(animationFrameId)
     }
-  }, [isPaused, isHovering, isDraggingContainer, tracks])
+  }, [isPaused, isDraggingContainer, tracks, repeatCount])
 
   // Drag del Contenedor del Carrusel (Arrastre de Mouse en Desktop)
   const handleContainerMouseDown = (e: React.MouseEvent) => {
@@ -225,8 +234,6 @@ export function NewCollection() {
         <div 
           ref={scrollRef}
           onScroll={handleScroll}
-          onMouseEnter={() => setIsHovering(true)}
-          onMouseLeave={() => setIsHovering(false)}
           onMouseDown={handleContainerMouseDown}
           onClickCapture={handleContainerClickCapture}
           className={`flex gap-6 overflow-x-auto scrollbar-none py-4 px-1 ${
@@ -237,7 +244,7 @@ export function NewCollection() {
             cursor: isDraggingContainer ? "grabbing" : "grab"
           }}
         >
-          {tracks.length > 0 && tripledTracks.map((track, index) => {
+          {tracks.length > 0 && repeatedTracks.map((track, index) => {
             const isThisTrackPlaying = currentTrackId === track.id && isPlaying
             return (
               <article 
@@ -267,7 +274,7 @@ export function NewCollection() {
                   {/* Botón de reproducción superpuesto al hacer hover */}
                   <div className="absolute inset-0 bg-black/55 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
-                      onClick={() => handlePlayClick(track)}
+                      onClick={(e) => { e.stopPropagation(); triggerTempPause(); handlePlayClick(track); }}
                       className={`flex size-12 items-center justify-center rounded-full transition-all border shadow-lg ${
                         isThisTrackPlaying 
                           ? "bg-primary text-primary-foreground border-primary scale-105" 
@@ -309,7 +316,7 @@ export function NewCollection() {
                 {/* Botón de compra / precio y descarga */}
                 <div className="mt-4 flex items-center gap-2">
                   <button
-                    onClick={() => openLicenseModal(track)}
+                    onClick={(e) => { e.stopPropagation(); triggerTempPause(); openLicenseModal(track); }}
                     className="flex-1 flex items-center justify-center gap-1.5 rounded border border-primary/30 bg-primary/5 hover:bg-primary hover:text-primary-foreground text-primary font-mono text-[10px] tracking-widest font-bold py-2.5 transition-all cursor-pointer"
                   >
                     <ShoppingCart className="size-3" />
