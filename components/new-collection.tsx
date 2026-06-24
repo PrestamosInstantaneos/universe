@@ -7,8 +7,6 @@ import { useCart, Track } from "./cart-context"
 export function NewCollection() {
   const { tracks, openLicenseModal } = useCart()
   
-  if (tracks.length === 0) return null
-  
   // Para el carrusel infinito continuo de Ruleta
   const minItems = 15
   const repeatCount = Math.max(3, Math.ceil(minItems / (tracks.length || 1)))
@@ -219,6 +217,7 @@ export function NewCollection() {
     }
   }
 
+  if (tracks.length === 0) return null
 
   return (
     <section className="mx-auto max-w-[1400px] px-6 py-12 md:px-8 md:py-20 space-y-20">

@@ -78,8 +78,6 @@ export function ReleasesSection() {
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null)
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
 
-  if (releases.length === 0) return null
-
   // Safe helper to get releases
   const col1Tracks = [releases[0], releases[1]].filter(Boolean)
   const col2Tracks = [releases[2], releases[3]].filter(Boolean)
@@ -113,6 +111,8 @@ export function ReleasesSection() {
       window.dispatchEvent(event)
     }
   }
+
+  if (releases.length === 0) return null
 
   return (
     <section className="mx-auto max-w-[1400px] px-6 py-12 md:px-8 md:py-20 border-t border-white/5">
