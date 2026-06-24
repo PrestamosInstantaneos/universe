@@ -38,7 +38,7 @@ export function HeroSection() {
               </h1>
               
               <p className="hidden sm:block font-mono text-xs tracking-wide text-foreground/60 max-w-md leading-relaxed">
-                Encuentra beats exclusivos, instrumentales listos para grabar y colabora con productores del colectivo FRZN.
+                Encuentra beats exclusivos, instrumentales listos para grabar y colabora con productores de la discográfica ALVIAL.
               </p>
 
               {/* Barra de búsqueda interactiva estilo Beatstars */}

@@ -2,10 +2,10 @@
 
 import React from "react"
 import { X, Download, FileText, CheckCircle2, ShoppingBag, Music, Disc } from "lucide-react"
-import { useCart, LICENSES, CartItem } from "./cart-context"
+import { useCart, CartItem } from "./cart-context"
 
 export function DownloadsModal() {
-  const { isDownloadsOpen, closeDownloads, purchasedItems } = useCart()
+  const { isDownloadsOpen, closeDownloads, purchasedItems, licenses } = useCart()
 
   if (!isDownloadsOpen) return null
 
@@ -24,16 +24,16 @@ export function DownloadsModal() {
 
   // Generar contrato de licencia ficticio
   const generateLicenseText = (item: CartItem) => {
-    const license = LICENSES.find(l => l.type === item.licenseType)
+    const license = licenses.find(l => l.type === item.licenseType)
     const termsStr = license?.terms.map((t, idx) => `${idx + 1}. ${t}`).join("\n") || ""
     
     return `==================================================================
-FRZN MUSIC COLLECTIVE - CONTRATO DE LICENCIA COMERCIAL
+ALVIAL - CONTRATO DE LICENCIA COMERCIAL
 ==================================================================
-ID del Pedido: FRZN-MOCK-${item.cartId.slice(-6).toUpperCase()}
+ID del Pedido: ALVIAL-MOCK-${item.cartId.slice(-6).toUpperCase()}
 Fecha: ${new Date().toLocaleDateString()}
-Licenciatario: Productor Autorizado / Cliente FRZN
-Lugar de Emisión: FRZN Store
+Licenciatario: Productor Autorizado / Cliente ALVIAL
+Lugar de Emisión: ALVIAL Store
 
 ------------------------------------------------------------------
 INFORMACIÓN DE LA OBRA:
@@ -55,20 +55,20 @@ ${termsStr}
 FIRMA Y ACEPTACIÓN:
 Este acuerdo es digital y entra en vigor automáticamente al confirmarse el pago por PayPal. La alteración de los metadatos o incumplimiento de los límites invalidará esta licencia.
 
-FRZN Collective Inc.
+ALVIAL Records Inc.
 ==================================================================`
   }
 
   const handleDownloadLicense = (item: CartItem) => {
-    const filename = `FRZN_Licencia_${item.track.title.replace(/\s+/g, "_")}_${item.licenseType}.txt`
+    const filename = `ALVIAL_Licencia_${item.track.title.replace(/\s+/g, "_")}_${item.licenseType}.txt`
     const content = generateLicenseText(item)
     downloadTextFile(filename, content)
   }
 
   const handleDownloadAudio = (item: CartItem, format: "MP3" | "WAV") => {
-    const filename = `${item.track.title.replace(/\s+/g, "_")}_(${item.track.producer})_[FRZN_${format}].${format.toLowerCase()}`
+    const filename = `${item.track.title.replace(/\s+/g, "_")}_(${item.track.producer})_[ALVIAL_${format}].${format.toLowerCase()}`
     const content = `==================================================================
-FRZN AUDIO FILE DEMO (${format} FORMAT)
+ALVIAL AUDIO FILE DEMO (${format} FORMAT)
 ==================================================================
 Track ID: ${item.track.id}
 Título: ${item.track.title}
@@ -84,7 +84,7 @@ Fidelidad: ${format === "WAV" ? "24-bit 44.1kHz High Definition" : "320kbps MP3 
   const handleDownloadStems = (item: CartItem) => {
     const filename = `${item.track.title.replace(/\s+/g, "_")}_Trackout_Stems_ZIP.txt`
     const content = `==================================================================
-FRZN TRACKOUT STEMS DESCARGA (.ZIP)
+ALVIAL TRACKOUT STEMS DESCARGA (.ZIP)
 ==================================================================
 Beat: ${item.track.title}
 Productor: ${item.track.producer}
@@ -136,7 +136,7 @@ Archivos de stems individuales incluidos en el paquete virtual:
           </div>
 
           <div className="font-mono text-[8px] bg-zinc-900/60 border border-white/5 px-3 py-1.5 rounded inline-block text-foreground/40 uppercase">
-            ID de Factura: FRZN-TX-{Math.floor(100000 + Math.random() * 900000)}
+            ID de Factura: ALVIAL-TX-{Math.floor(100000 + Math.random() * 900000)}
           </div>
         </div>
 
@@ -172,7 +172,7 @@ Archivos de stems individuales incluidos en el paquete virtual:
                         {item.track.producer}
                       </p>
                       <span className="inline-block font-mono text-[7px] text-emerald-400 uppercase tracking-widest bg-emerald-400/5 border border-emerald-400/10 px-1 py-0.5 rounded mt-1.5 font-bold">
-                        {LICENSES.find(l => l.type === item.licenseType)?.name || item.licenseType}
+                        {licenses.find(l => l.type === item.licenseType)?.name || item.licenseType}
                       </span>
                     </div>
                   </div>

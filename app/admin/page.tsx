@@ -47,10 +47,22 @@ type AdminStats = {
 
 export default function AdminPage() {
   const [mounted, setMounted] = useState(false)
-  const { user, logoutUser, refreshCatalog, allTracks, allNews } = useCart()
+  const { user, logoutUser, refreshCatalog, allTracks, allNews, licenses, logoUrl } = useCart()
 
-  // Tab State: stats | upload | catalog | news
-  const [activeTab, setActiveTab] = useState<"stats" | "upload" | "catalog" | "news">("stats")
+  // Tab State: stats | upload | catalog | news | settings
+  const [activeTab, setActiveTab] = useState<"stats" | "upload" | "catalog" | "news" | "settings">("stats")
+
+  // Logotipo y Licencias
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [localLicenses, setLocalLicenses] = useState<any[]>([])
+  const [selectedLicenseType, setSelectedLicenseType] = useState<string>("basic")
+  const [newConditionText, setNewConditionText] = useState<string>("")
+
+  useEffect(() => {
+    if (licenses) {
+      setLocalLicenses(JSON.parse(JSON.stringify(licenses)))
+    }
+  }, [licenses])
 
   // Local state copies for instant toggles
   const [localTracks, setLocalTracks] = useState<Track[]>([])
@@ -63,7 +75,7 @@ export default function AdminPage() {
 
   // Upload Form fields
   const [title, setTitle] = useState("")
-  const [producer, setProducer] = useState("FRZN SOUND")
+  const [producer, setProducer] = useState("ALVIAL")
   const [price, setPrice] = useState("29.99")
   const [bpm, setBpm] = useState("120")
   const [key, setKey] = useState("")
@@ -455,6 +467,353 @@ export default function AdminPage() {
     }
   }
 
+  const handleSaveLogo = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!logoFile) {
+      setStatus("error")
+      setStatusMessage("Por favor selecciona una imagen de logotipo.")
+      return
+    }
+
+    setStatus("loading")
+    setStatusMessage("Procesando imagen de logotipo...")
+
+    try {
+      const logoResult = await readFileAsBase64(logoFile)
+      setStatusMessage("Subiendo logotipo a Google Drive...")
+
+      const appsScriptUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL
+      const folderId = process.env.NEXT_PUBLIC_DRIVE_FOLDER_ID
+
+      if (!appsScriptUrl || !folderId) {
+        throw new Error("Configuración incompleta en variables de entorno.")
+      }
+
+      const response = await fetch(appsScriptUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "updateSettings",
+          folderId,
+          imageData: logoResult.data,
+          imageMime: logoResult.mime,
+          imageName: logoFile.name
+        })
+      })
+
+      const result = await response.json()
+      if (result.status === "success") {
+        setStatus("success")
+        setStatusMessage("¡Logotipo actualizado correctamente!")
+        setLogoFile(null)
+        await refreshCatalog()
+      } else {
+        throw new Error(result.message || "Error al subir logotipo.")
+      }
+    } catch (err: any) {
+      console.error(err)
+      setStatus("error")
+      setStatusMessage(err.message || "Error inesperado al subir logotipo.")
+    }
+  }
+
+  const handleResetLogo = async () => {
+    if (!confirm("¿Seguro que deseas restablecer el logotipo y volver al formato de texto estándar?")) return
+
+    setStatus("loading")
+    setStatusMessage("Restableciendo logotipo...")
+
+    try {
+      const appsScriptUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL
+      if (!appsScriptUrl) throw new Error("URL de Apps Script no configurada.")
+
+      const response = await fetch(appsScriptUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "updateSettings",
+          existingLogo: ""
+        })
+      })
+
+      const result = await response.json()
+      if (result.status === "success") {
+        setStatus("success")
+        setStatusMessage("¡Logotipo restablecido correctamente a texto!")
+        await refreshCatalog()
+      } else {
+        throw new Error(result.message || "Error al restablecer logotipo.")
+      }
+    } catch (err: any) {
+      console.error(err)
+      setStatus("error")
+      setStatusMessage(err.message || "Error al restablecer logotipo.")
+    }
+  }
+
+  const updateLicenseField = (type: string, field: string, value: any) => {
+    setLocalLicenses(prev => prev.map(lic => {
+      if (lic.type === type) {
+        return { ...lic, [field]: value }
+      }
+      return lic
+    }))
+  }
+
+  const handleAddCondition = (type: string) => {
+    if (!newConditionText.trim()) return
+    setLocalLicenses(prev => prev.map(lic => {
+      if (lic.type === type) {
+        return {
+          ...lic,
+          terms: [...(lic.terms || []), newConditionText.trim()]
+        }
+      }
+      return lic
+    }))
+    setNewConditionText("")
+  }
+
+  const handleRemoveCondition = (type: string, index: number) => {
+    setLocalLicenses(prev => prev.map(lic => {
+      if (lic.type === type) {
+        const updatedTerms = [...(lic.terms || [])]
+        updatedTerms.splice(index, 1)
+        return {
+          ...lic,
+          terms: updatedTerms
+        }
+      }
+      return lic
+    }))
+  }
+
+  const handleSaveLicenses = async () => {
+    setStatus("loading")
+    setStatusMessage("Guardando plantillas de licencias en la base de datos...")
+
+    try {
+      const appsScriptUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL
+      if (!appsScriptUrl) throw new Error("URL de Apps Script no configurada.")
+
+      const response = await fetch(appsScriptUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "updateLicenses",
+          licenses: localLicenses
+        })
+      })
+
+      const result = await response.json()
+      if (result.status === "success") {
+        setStatus("success")
+        setStatusMessage("¡Plantillas de licencias guardadas y actualizadas exitosamente!")
+        await refreshCatalog()
+      } else {
+        throw new Error(result.message || "Error al guardar licencias.")
+      }
+    } catch (err: any) {
+      console.error(err)
+      setStatus("error")
+      setStatusMessage(err.message || "Error al guardar licencias.")
+    }
+  }
+
+  const renderSettingsTab = () => {
+    const activeLic = localLicenses.find(l => l.type === selectedLicenseType)
+
+    return (
+      <div className="space-y-8 text-left max-w-4xl mx-auto">
+        <div className="border-b border-white/5 pb-3">
+          <h3 className="font-heading text-lg font-bold text-foreground uppercase">Ajustes Generales y Licencias</h3>
+          <p className="font-mono text-[9px] text-foreground/45 uppercase mt-1">Configura el logotipo de la discográfica y edita los contratos de las licencias</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+
+          {/* SECCIÓN LOGO */}
+          <div className="bg-zinc-950/45 border border-white/5 rounded-lg p-6 space-y-6">
+            <div>
+              <h4 className="font-heading text-xs font-bold text-foreground uppercase tracking-widest border-b border-white/5 pb-2">Logotipo de ALVIAL</h4>
+              <p className="font-mono text-[8px] text-foreground/40 uppercase mt-1.5 leading-relaxed">
+                Personaliza la imagen del logotipo de la cabecera. Si no subes ninguna, se mostrará el texto "ALVIAL" por defecto.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-center p-4 rounded bg-zinc-900/30 border border-white/5 min-h-[80px]">
+                {logoUrl ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={logoUrl} alt="Logo de ALVIAL" className="h-10 max-w-[200px] object-contain border border-white/10 p-1.5 rounded bg-black" />
+                ) : (
+                  <span className="font-heading text-xl font-black tracking-[-0.04em] text-foreground uppercase">ALVIAL</span>
+                )}
+              </div>
+
+              <form onSubmit={handleSaveLogo} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="font-mono text-[8px] text-foreground/50 uppercase font-bold">Subir Nuevo Logo</label>
+                  <div className="relative flex items-center justify-center border border-dashed border-white/10 hover:border-primary/50 bg-zinc-900/20 p-4 rounded text-center cursor-pointer">
+                    <input type="file" accept="image/*" onChange={(e) => setLogoFile(e.target.files?.[0] || null)} className="absolute inset-0 size-full opacity-0 cursor-pointer" />
+                    <span className="font-mono text-[9px] text-foreground/60 flex items-center gap-2">
+                      <ImageIcon className="size-4 text-primary shrink-0" />
+                      {logoFile ? logoFile.name : "Seleccionar imagen..."}
+                    </span>
+                  </div>
+                  <div className="bg-zinc-900/50 border border-white/5 p-3 rounded space-y-1.5">
+                    <span className="font-mono text-[8.5px] font-bold text-amber-500 uppercase block">💡 Recomendaciones:</span>
+                    <ul className="list-disc list-inside font-mono text-[8px] text-foreground/50 space-y-1 leading-normal">
+                      <li>Usar formato PNG con fondo transparente</li>
+                      <li>Proporción recomendada de aspecto 3:1</li>
+                      <li>Dimensiones recomendadas: 150px de ancho x 50px de alto</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    type="submit"
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-primary hover:bg-primary/95 text-primary-foreground font-mono text-[9.5px] tracking-wider font-bold py-2.5 rounded cursor-pointer transition-colors animate-all"
+                  >
+                    GUARDAR LOGO
+                  </button>
+                  {logoUrl && (
+                    <button
+                      type="button"
+                      onClick={handleResetLogo}
+                      className="border border-red-500/30 hover:bg-red-500 hover:text-white text-red-400 font-mono text-[9.5px] tracking-wider font-bold px-4 rounded cursor-pointer transition-colors"
+                    >
+                      RESTABLECER
+                    </button>
+                  )}
+                </div>
+              </form>
+            </div>
+          </div>
+
+          {/* SECCIÓN LICENCIAS */}
+          <div className="bg-zinc-950/45 border border-white/5 rounded-lg p-6 space-y-6">
+            <div>
+              <h4 className="font-heading text-xs font-bold text-foreground uppercase tracking-widest border-b border-white/5 pb-2">Editor de Plantillas de Licencia</h4>
+              <p className="font-mono text-[8px] text-foreground/40 uppercase mt-1.5 leading-relaxed">
+                Modifica el nombre, formatos, precios y añade/elimina las condiciones legales de cada contrato.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="font-mono text-[8px] text-foreground/50 uppercase font-bold">Seleccionar Plantilla</label>
+                <select
+                  value={selectedLicenseType}
+                  onChange={(e) => { setSelectedLicenseType(e.target.value); setNewConditionText(""); }}
+                  className="w-full bg-zinc-900 border border-white/10 p-2.5 rounded text-xs font-mono text-foreground outline-none cursor-pointer"
+                >
+                  <option value="basic">BASIC LICENSE (MP3)</option>
+                  <option value="premium">PREMIUM LICENSE (WAV)</option>
+                  <option value="unlimited">UNLIMITED (WAV + STEMS)</option>
+                  <option value="exclusive">EXCLUSIVE LICENSE (FULL RIGHTS)</option>
+                </select>
+              </div>
+
+              {activeLic && (
+                <div className="space-y-4 font-mono text-[10px] border-t border-white/5 pt-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[8px] text-foreground/50 uppercase font-bold">Nombre</label>
+                      <input
+                        type="text"
+                        value={activeLic.name}
+                        onChange={(e) => updateLicenseField(activeLic.type, "name", e.target.value)}
+                        className="w-full bg-zinc-900 border border-white/10 p-2.5 rounded text-xs text-foreground outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[8px] text-foreground/50 uppercase font-bold">Formatos</label>
+                      <input
+                        type="text"
+                        value={activeLic.format}
+                        onChange={(e) => updateLicenseField(activeLic.type, "format", e.target.value)}
+                        className="w-full bg-zinc-900 border border-white/10 p-2.5 rounded text-xs text-foreground outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[8px] text-foreground/50 uppercase font-bold">Precio Adicional / Offset ($)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={activeLic.priceOffset}
+                      onChange={(e) => updateLicenseField(activeLic.type, "priceOffset", parseFloat(e.target.value) || 0)}
+                      className="w-full bg-zinc-900 border border-white/10 p-2.5 rounded text-xs text-foreground outline-none"
+                    />
+                  </div>
+
+                  {/* Condiciones */}
+                  <div className="space-y-2">
+                    <label className="text-[8px] text-foreground/50 uppercase font-bold block border-b border-white/5 pb-1">Términos y Condiciones ({activeLic.terms?.length || 0})</label>
+
+                    {/* Lista actual */}
+                    <div className="space-y-1 max-h-[160px] overflow-y-auto bg-zinc-900/20 border border-white/5 p-2 rounded text-[8.5px] leading-relaxed">
+                      {activeLic.terms && activeLic.terms.length > 0 ? (
+                        activeLic.terms.map((term: string, idx: number) => (
+                          <div key={idx} className="flex items-start justify-between gap-3 p-1.5 hover:bg-white/5 rounded">
+                            <span className="text-foreground/75 truncate">{idx + 1}. {term}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveCondition(activeLic.type, idx)}
+                              className="text-red-400 hover:text-red-300 font-bold uppercase shrink-0 px-1 hover:bg-red-500/10 rounded cursor-pointer"
+                            >
+                              ELIMINAR
+                            </button>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-center text-foreground/30 py-4 uppercase">No hay términos cargados en esta plantilla.</p>
+                      )}
+                    </div>
+
+                    {/* Agregar condición */}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Redactar nueva condición del contrato..."
+                        value={newConditionText}
+                        onChange={(e) => setNewConditionText(e.target.value)}
+                        className="flex-1 bg-zinc-900 border border-white/10 p-2.5 rounded text-xs text-foreground placeholder-foreground/30 outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleAddCondition(activeLic.type)}
+                        className="bg-primary/10 border border-primary/20 hover:bg-primary hover:text-primary-foreground text-primary px-3 rounded text-[9.5px] font-bold tracking-wider uppercase transition-colors cursor-pointer"
+                      >
+                        AGREGAR
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-white/5">
+                    <button
+                      type="button"
+                      onClick={handleSaveLicenses}
+                      className="w-full flex items-center justify-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-mono text-[9.5px] tracking-widest font-bold py-3.5 rounded cursor-pointer transition-colors shadow-lg shadow-emerald-500/10"
+                    >
+                      <PlusCircle className="size-4 shrink-0" />
+                      GUARDAR PLANTILLAS DE LICENCIAS
+                    </button>
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    )
+  }
+
   // Render Pestaña Noticias
   const renderNewsTab = () => {
     return (
@@ -721,6 +1080,17 @@ export default function AdminPage() {
             <Megaphone className="size-3.5" />
             NOTICIAS ({localNews.length})
           </button>
+          <button
+            onClick={() => { setActiveTab("settings"); setStatus("idle"); }}
+            className={`flex items-center gap-2 font-mono text-[10px] tracking-widest font-bold px-5 py-3.5 border-b-2 transition-all cursor-pointer shrink-0 ${
+              activeTab === "settings"
+                ? "border-primary text-primary bg-primary/5"
+                : "border-transparent text-foreground/60 hover:text-foreground hover:bg-white/5"
+            }`}
+          >
+            <Lock className="size-3.5" />
+            AJUSTES / LICENCIAS
+          </button>
         </div>
 
         {/* Notificaciones de carga / exito / error */}
@@ -936,7 +1306,7 @@ export default function AdminPage() {
                       type="text"
                       value={producer}
                       onChange={(e) => setProducer(e.target.value)}
-                      placeholder="Ej. FRZN SOUND"
+                      placeholder="Ej. ALVIAL"
                       className="w-full bg-zinc-900/50 border border-white/10 hover:border-white/20 focus:border-primary text-foreground font-mono text-xs p-3 rounded outline-none"
                       required
                     />
@@ -1072,6 +1442,7 @@ export default function AdminPage() {
 
           {activeTab === "catalog" && renderCatalogTab()}
           {activeTab === "news" && renderNewsTab()}
+          {activeTab === "settings" && renderSettingsTab()}
         </div>
 
         {/* MODAL DE EDICIÓN DE BEATS */}

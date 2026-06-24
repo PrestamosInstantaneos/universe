@@ -26,7 +26,8 @@ export function SiteHeader() {
     openSearch,
     user,
     loginUser,
-    logoutUser
+    logoutUser,
+    logoUrl
   } = useCart()
 
   const isAdmin = user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL || user?.email === "music.bests.page.is@gmail.com"
@@ -108,10 +109,15 @@ export function SiteHeader() {
       />
       <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-6 py-5 md:px-8">
         {/* Logo */}
-        <a href="#" className="flex items-center gap-2" aria-label="FRZN inicio">
-          <span className="font-heading text-2xl font-black tracking-[-0.04em] text-foreground md:text-3xl">
-            FRZN
-          </span>
+        <a href="#" className="flex items-center gap-2" aria-label="ALVIAL inicio">
+          {logoUrl ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={logoUrl} alt="ALVIAL" className="h-8 max-w-[150px] object-contain" />
+          ) : (
+            <span className="font-heading text-2xl font-black tracking-[-0.04em] text-foreground md:text-3xl">
+              ALVIAL
+            </span>
+          )}
         </a>
 
         {/* Desktop nav */}

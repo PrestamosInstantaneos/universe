@@ -2,7 +2,7 @@
 
 import React, { useState } from "react"
 import { Shield, Lock, ArrowLeft, RefreshCw, CheckCircle2, X } from "lucide-react"
-import { useCart, LICENSES } from "./cart-context"
+import { useCart } from "./cart-context"
 
 export function PaypalModal() {
   const { 
@@ -72,7 +72,7 @@ export function PaypalModal() {
             <Lock className="size-3 text-emerald-600 shrink-0 fill-current" />
             <span className="text-emerald-700 font-bold shrink-0">Seguro</span>
             <span className="text-slate-400">|</span>
-            <span className="truncate text-slate-600">https://www.paypal.com/checkout/pay?flow=frzn-8293</span>
+            <span className="truncate text-slate-600">https://www.paypal.com/checkout/pay?flow=alvial-8293</span>
           </div>
           
           <button 
@@ -245,7 +245,7 @@ export function PaypalModal() {
                 <CheckCircle2 className="size-16 text-emerald-500 fill-emerald-50" />
                 <div className="text-center space-y-1">
                   <h4 className="font-bold text-slate-800 text-lg">¡Pago Autorizado!</h4>
-                  <p className="text-xs text-slate-500">Volviendo a FRZN Music Collective...</p>
+                  <p className="text-xs text-slate-500">Volviendo a ALVIAL...</p>
                 </div>
               </div>
             )}

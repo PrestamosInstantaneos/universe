@@ -6,7 +6,7 @@ export function SiteFooter() {
       <div className="mx-auto max-w-[1400px] px-6 md:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
         {/* Copyright y Descargo de responsabilidad adaptado */}
         <p className="text-center md:text-left max-w-xl leading-relaxed uppercase">
-          © 2026 FRZN SOUND. Todos los derechos reservados. Licenciamiento de instrumentales y beats sujeto a términos y condiciones de licencia.
+          © 2026 ALVIAL. Todos los derechos reservados. Licenciamiento de instrumentales y beats sujeto a términos y condiciones de licencia.
         </p>
 
         {/* Enlaces de políticas */}

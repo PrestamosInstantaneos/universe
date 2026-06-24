@@ -164,7 +164,7 @@ export function NewsSection() {
                   </div>
                   <div className="flex items-center gap-1.5">
                     <User className="size-3.5 text-primary/75" />
-                    <span>POR FRZN ADMIN</span>
+                    <span>POR ALVIAL ADMIN</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Clock className="size-3.5 text-foreground/35" />
@@ -204,7 +204,7 @@ export function NewsSection() {
               <div className="flex items-center gap-2">
                 <BookOpen className="size-3.5 text-primary" />
                 <span className="font-mono text-[8px] text-foreground/35 uppercase tracking-widest leading-none">
-                  FRZN Portal de Avisos
+                  ALVIAL Portal de Avisos
                 </span>
               </div>
               <button

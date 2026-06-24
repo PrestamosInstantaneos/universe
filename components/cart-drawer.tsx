@@ -2,7 +2,7 @@
 
 import React from "react"
 import { X, Trash2, ShoppingBag, Check, ShieldCheck } from "lucide-react"
-import { useCart, LICENSES } from "./cart-context"
+import { useCart } from "./cart-context"
 
 export function CartDrawer() {
   const { 
@@ -12,7 +12,8 @@ export function CartDrawer() {
     removeFromCart, 
     toggleItemSelection, 
     startCheckout,
-    openLicenseModal
+    openLicenseModal,
+    licenses
   } = useCart()
 
   // Calcular items seleccionados y totales
@@ -89,7 +90,7 @@ export function CartDrawer() {
           ) : (
             /* Items List */
             cart.map((item) => {
-              const license = LICENSES.find(l => l.type === item.licenseType)
+              const license = licenses.find(l => l.type === item.licenseType)
               
               return (
                 <div 

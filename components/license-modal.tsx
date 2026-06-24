@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import { X, Check, ShoppingCart, ShieldCheck, Music, Disc } from "lucide-react"
-import { useCart, LICENSES, LicenseType } from "./cart-context"
+import { useCart, LicenseType } from "./cart-context"
 
 export function LicenseModal() {
   const { 
@@ -13,7 +13,8 @@ export function LicenseModal() {
     startCheckout,
     licenseModalDefaultType,
     licenseModalCartId,
-    updateCartItemLicense
+    updateCartItemLicense,
+    licenses
   } = useCart()
 
   const [selectedLicense, setSelectedLicense] = useState<LicenseType>("basic")
@@ -100,14 +101,14 @@ export function LicenseModal() {
             <div className="flex justify-between items-end">
               <span className="font-mono text-[10px] text-foreground/45 uppercase">Precio Final</span>
               <span className="font-heading text-3xl font-black text-primary">
-                ${(basePrice + (LICENSES.find(l => l.type === selectedLicense)?.priceOffset || 0)).toFixed(2)}
+                ${(basePrice + (licenses.find(l => l.type === selectedLicense)?.priceOffset || 0)).toFixed(2)}
               </span>
             </div>
             <div className="bg-zinc-900/60 border border-white/5 rounded p-3 flex items-start gap-2.5">
               <ShieldCheck className="size-4.5 text-primary shrink-0 mt-0.5" />
               <div>
                 <h4 className="font-mono text-[9px] tracking-wider text-foreground/80 font-bold uppercase">
-                  Garantía FRZN
+                  Garantía ALVIAL
                 </h4>
                 <p className="font-mono text-[8px] leading-relaxed text-foreground/45 mt-0.5">
                   Archivos de audio de alta fidelidad, libres de marcas de agua por voz, listos para tu distribución.
@@ -126,7 +127,7 @@ export function LicenseModal() {
             
             {/* Grid of Licenses */}
             <div className="grid grid-cols-1 gap-2.5">
-              {LICENSES.map((lic) => {
+              {licenses.map((lic) => {
                 const isSelected = selectedLicense === lic.type
                 const finalPrice = basePrice + lic.priceOffset
                 
@@ -179,7 +180,7 @@ export function LicenseModal() {
                 Términos y Derechos Incluidos:
               </h5>
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {(LICENSES.find(l => l.type === selectedLicense)?.terms || []).map((term, i) => (
+                {(licenses.find(l => l.type === selectedLicense)?.terms || []).map((term, i) => (
                   <li key={i} className="flex items-start gap-2 text-foreground/75 font-mono text-[9px] leading-relaxed">
                     <Check className="size-3 text-primary shrink-0 mt-0.5" />
                     <span>{term}</span>

@@ -179,7 +179,7 @@ export const ALL_TRACKS: Track[] = [
     id: "7",
     img: "/images/artist-7.png",
     title: "ICEFIELD BLUE",
-    producer: "FRZN SOUND",
+    producer: "ALVIAL",
     tags: ["REGGAETÓN"],
     bpm: 98,
     key: "E Minor",
@@ -191,7 +191,7 @@ export const ALL_TRACKS: Track[] = [
     id: "8",
     img: "/images/artist-8.png",
     title: "POLAR WHITE",
-    producer: "FRZN SOUND",
+    producer: "ALVIAL",
     tags: ["BOOM BAP"],
     bpm: 90,
     key: "B Minor",
@@ -202,7 +202,7 @@ export const ALL_TRACKS: Track[] = [
     id: "rel-1",
     img: "/images/artist-7.png",
     title: "Ghetto Romance",
-    producer: "FRZN SOUND",
+    producer: "ALVIAL",
     tags: ["REGGAETÓN", "LATIN"],
     bpm: 98,
     key: "E Minor",
@@ -257,7 +257,7 @@ export const ALL_TRACKS: Track[] = [
     id: "rel-6",
     img: "/images/artist-8.png",
     title: "Polar Express",
-    producer: "FRZN SOUND",
+    producer: "ALVIAL",
     tags: ["BOOM BAP", "CLASSIC"],
     bpm: 92,
     key: "E Minor",
@@ -295,7 +295,7 @@ export const DEFAULT_NEWS: NewsPost[] = [
     date: "18 DE JUNIO, 2026",
     tag: "OFERTA",
     description: "Añade dos beats con la misma licencia a tu carrito y el descuento se aplicará automáticamente al pagar.",
-    content: "Queremos apoyar a los artistas independientes este mes. Al añadir cualquier par de beats de la misma categoría de licencia (Basic o Premium) a tu carrito de compras, el sistema de FRZN descontará automáticamente el de menor valor. Esta oferta especial estará activa por tiempo limitado y finalizará el 30 de junio. ¡Aprovecha para armar tus maquetas!",
+    content: "Queremos apoyar a los artistas independientes este mes. Al añadir cualquier par de beats de la misma categoría de licencia (Basic o Premium) a tu carrito de compras, el sistema de ALVIAL descontará automáticamente el de menor valor. Esta oferta especial estará activa por tiempo limitado y finalizará el 30 de junio. ¡Aprovecha para armar tus maquetas!",
     image: "/images/city-banner.png",
     expuesto: true
   },
@@ -304,7 +304,7 @@ export const DEFAULT_NEWS: NewsPost[] = [
     title: "Cómo registrar y monetizar tu canción usando nuestras licencias",
     date: "15 DE JUNIO, 2026",
     tag: "TUTORIAL",
-    description: "Una guía rápida paso a paso sobre cómo registrar tus canciones en BMI/ASCAP utilizando la licencia exclusiva de FRZN.",
+    description: "Una guía rápida paso a paso sobre cómo registrar tus canciones en BMI/ASCAP utilizando la licencia exclusiva de ALVIAL.",
     content: "Comprar un beat es solo el primer paso en tu carrera musical. En este post de ayuda, te explicamos detalladamente cómo debes rellenar los datos de escritor y editor al registrar tu tema en sociedades de gestión de derechos de autor (como BMI, ASCAP o SCD). Desglosamos las diferencias clave sobre las cláusulas de regalías contenidas en tu licencia digital para que no tengas ningún inconveniente al monetizar tus pistas en plataformas de streaming como YouTube o Spotify.",
     image: "/images/hero-thumb-2.png",
     expuesto: true
@@ -326,6 +326,8 @@ type CartContextType = {
   releases: Track[]
   allTracks: Track[]
   refreshCatalog: () => Promise<void>
+  licenses: License[]
+  logoUrl: string
   // News
   news: NewsPost[]
   allNews: NewsPost[]
@@ -387,6 +389,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [releases, setReleases] = useState<Track[]>(() => ALL_TRACKS.filter(t => t.id.startsWith("rel-")))
   const [allNews, setAllNews] = useState<NewsPost[]>(() => DEFAULT_NEWS)
   const [news, setNews] = useState<NewsPost[]>(() => DEFAULT_NEWS)
+  const [licenses, setLicenses] = useState<License[]>(() => LICENSES)
+  const [logoUrl, setLogoUrl] = useState<string>("")
 
   const refreshCatalog = async () => {
     try {
@@ -399,29 +403,39 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       // 1. Obtener Beats
       const response = await fetch(`${appsScriptUrl}?action=getTracks`)
       const result = await response.json()
-      if (result.status === "success" && Array.isArray(result.tracks)) {
-        const parsedTracks = result.tracks.map((t: any) => ({
-          ...t,
-          expuesto: t.expuesto !== false && t.expuesto !== "FALSE",
-          tendencia: t.tendencia !== false && t.tendencia !== "FALSE",
-          dropeado: t.dropeado === true || t.dropeado === "TRUE"
-        }))
+      if (result.status === "success") {
+        if (Array.isArray(result.tracks)) {
+          const parsedTracks = result.tracks.map((t: any) => ({
+            ...t,
+            expuesto: t.expuesto !== false && t.expuesto !== "FALSE",
+            tendencia: t.tendencia !== false && t.tendencia !== "FALSE",
+            dropeado: t.dropeado === true || t.dropeado === "TRUE"
+          }))
 
-        // Merge fetched tracks with ALL_TRACKS to preserve local metadata/ads/emojis
-        const trackMap = new Map<string, Track>()
-        ALL_TRACKS.forEach(t => trackMap.set(t.id, t))
-        
-        parsedTracks.forEach((t: Track) => {
-          trackMap.set(t.id, {
-            ...trackMap.get(t.id),
-            ...t
+          // Merge fetched tracks with ALL_TRACKS to preserve local metadata/ads/emojis
+          const trackMap = new Map<string, Track>()
+          ALL_TRACKS.forEach(t => trackMap.set(t.id, t))
+          
+          parsedTracks.forEach((t: Track) => {
+            trackMap.set(t.id, {
+              ...trackMap.get(t.id),
+              ...t
+            })
           })
-        })
-        
-        const combined = Array.from(trackMap.values())
-        setAllTracks(combined)
-        setTracks(combined.filter(t => t.expuesto !== false && t.tendencia !== false))
-        setReleases(combined.filter(t => t.expuesto !== false && t.dropeado === true))
+          
+          const combined = Array.from(trackMap.values())
+          setAllTracks(combined)
+          setTracks(combined.filter(t => t.expuesto !== false && t.tendencia !== false))
+          setReleases(combined.filter(t => t.expuesto !== false && t.dropeado === true))
+        }
+
+        if (Array.isArray(result.licenses)) {
+          setLicenses(result.licenses)
+        }
+
+        if (result.settings && typeof result.settings.logoUrl === "string") {
+          setLogoUrl(result.settings.logoUrl)
+        }
       }
 
       // 2. Obtener Noticias
@@ -599,7 +613,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }
 
   const addToCart = (track: Track, licenseType: LicenseType) => {
-    const license = LICENSES.find(l => l.type === licenseType)
+    const license = licenses.find(l => l.type === licenseType)
     const basePrice = parseBasePrice(track.price)
     const finalPrice = basePrice + (license ? license.priceOffset : 0)
     
@@ -624,7 +638,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }
 
   const updateCartItemLicense = (cartId: string, licenseType: LicenseType) => {
-    const license = LICENSES.find(l => l.type === licenseType)
+    const license = licenses.find(l => l.type === licenseType)
     const newCart = cart.map(item => {
       if (item.cartId === cartId) {
         const basePrice = parseBasePrice(item.track.price)
@@ -665,11 +679,33 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsPaypalOpen(false)
   }
 
-  const confirmPurchase = () => {
+  const confirmPurchase = async () => {
     // Tomar solo los ítems seleccionados
     const itemsToBuy = cart.filter(item => item.selected)
     const remainingItems = cart.filter(item => !item.selected)
     
+    // Takedown de licencias EXCLUSIVAS
+    const exclusiveItems = itemsToBuy.filter(item => item.licenseType === "exclusive")
+    if (exclusiveItems.length > 0) {
+      const appsScriptUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL
+      if (appsScriptUrl) {
+        for (const item of exclusiveItems) {
+          try {
+            await fetch(appsScriptUrl, {
+              method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify({
+                action: "sellExclusiveBeat",
+                id: item.track.id
+              })
+            })
+          } catch (err) {
+            console.error("Error setting exclusive beat to sold:", err)
+          }
+        }
+      }
+    }
+
     const newPurchased = [...itemsToBuy, ...purchasedItems]
     setPurchasedItems(newPurchased)
     localStorage.setItem("frzn_purchased", JSON.stringify(newPurchased))
@@ -679,6 +715,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     
     setIsPaypalOpen(false)
     setIsDownloadsOpen(true)
+
+    // Refrescar catálogo para ocultar el beat vendido inmediatamente
+    if (exclusiveItems.length > 0) {
+      await refreshCatalog()
+    }
   }
 
   const closeDownloads = () => {
@@ -751,6 +792,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       releases,
       allTracks,
       refreshCatalog,
+      licenses,
+      logoUrl,
       // News
       news,
       allNews,

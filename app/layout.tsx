@@ -20,9 +20,9 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'FRZN — Multigénero / Sonido Urbano',
+  title: 'ALVIAL — Discográfica / Sonido Urbano',
   description:
-    'FRZN es un colectivo musical multigénero nacido en la calle. Trap, drill, afrobeats, R&B, reggaetón y house. Sonido forjado para el frío.',
+    'ALVIAL es una discográfica musical nacida en la calle. Trap, drill, afrobeats, R&B, reggaetón y house. Sonido forjado para el frío.',
   generator: 'v0.app',
   icons: {
     icon: [
