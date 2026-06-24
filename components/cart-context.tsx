@@ -328,6 +328,9 @@ type CartContextType = {
   refreshCatalog: () => Promise<void>
   licenses: License[]
   logoUrl: string
+  paypalEmail: string
+  binanceId: string
+  zinliPhone: string
   // News
   news: NewsPost[]
   allNews: NewsPost[]
@@ -359,6 +362,7 @@ type CartContextType = {
   confirmPurchase: () => void
   closeDownloads: () => void
   openDownloads: () => void
+  deleteBeat: (id: string) => Promise<boolean>
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
@@ -391,6 +395,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [news, setNews] = useState<NewsPost[]>(() => DEFAULT_NEWS)
   const [licenses, setLicenses] = useState<License[]>(() => LICENSES)
   const [logoUrl, setLogoUrl] = useState<string>("")
+  const [paypalEmail, setPaypalEmail] = useState<string>("")
+  const [binanceId, setBinanceId] = useState<string>("")
+  const [zinliPhone, setZinliPhone] = useState<string>("")
 
   const refreshCatalog = async () => {
     try {
@@ -433,8 +440,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           setLicenses(result.licenses)
         }
 
-        if (result.settings && typeof result.settings.logoUrl === "string") {
-          setLogoUrl(result.settings.logoUrl)
+        if (result.settings) {
+          if (typeof result.settings.logoUrl === "string") setLogoUrl(result.settings.logoUrl)
+          if (typeof result.settings.paypalEmail === "string") setPaypalEmail(result.settings.paypalEmail)
+          if (typeof result.settings.binanceId === "string") setBinanceId(result.settings.binanceId)
+          if (typeof result.settings.zinliPhone === "string") setZinliPhone(result.settings.zinliPhone)
         }
       }
 
@@ -454,9 +464,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  // Fetch catalog on mount
+  // Fetch catalog on mount and start polling every 20 seconds
   useEffect(() => {
     refreshCatalog()
+    const interval = setInterval(() => {
+      refreshCatalog()
+    }, 20000)
+    return () => clearInterval(interval)
   }, [])
 
   // Cargar estado inicial desde localStorage si es posible
@@ -730,6 +744,33 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsDownloadsOpen(true)
   }
 
+  const deleteBeat = async (id: string): Promise<boolean> => {
+    try {
+      const appsScriptUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL
+      if (!appsScriptUrl) {
+        console.warn("NEXT_PUBLIC_APPS_SCRIPT_URL not configured")
+        return false
+      }
+      const response = await fetch(appsScriptUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "deleteBeat",
+          id
+        })
+      })
+      const result = await response.json()
+      if (result.status === "success") {
+        await refreshCatalog()
+        return true
+      }
+      return false
+    } catch (e) {
+      console.error("Error deleting beat:", e)
+      return false
+    }
+  }
+
   const loginUser = async (idToken: string): Promise<boolean> => {
     setIsLoadingUser(true)
     try {
@@ -794,6 +835,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       refreshCatalog,
       licenses,
       logoUrl,
+      paypalEmail,
+      binanceId,
+      zinliPhone,
       // News
       news,
       allNews,
@@ -824,7 +868,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setPaypalState,
       confirmPurchase,
       closeDownloads,
-      openDownloads
+      openDownloads,
+      deleteBeat
     }}>
       {children}
     </CartContext.Provider>

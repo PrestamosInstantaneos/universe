@@ -160,18 +160,28 @@ function doGet(e) {
       }
       
       // Cargar ajustes del sitio
-      var settings = { logoUrl: "", logoText: "ALVIAL" };
+      var settings = { 
+        logoUrl: "", 
+        logoText: "ALVIAL",
+        paypalEmail: "",
+        binanceId: "",
+        zinliPhone: ""
+      };
       var settingsSheet = ss.getSheetByName("Ajustes");
       if (!settingsSheet) {
         settingsSheet = ss.insertSheet("Ajustes");
         settingsSheet.appendRow(["Clave", "Valor"]);
         settingsSheet.appendRow(["logoUrl", ""]);
         settingsSheet.appendRow(["logoText", "ALVIAL"]);
+        settingsSheet.appendRow(["paypalEmail", ""]);
+        settingsSheet.appendRow(["binanceId", ""]);
+        settingsSheet.appendRow(["zinliPhone", ""]);
       } else {
         var setValues = settingsSheet.getDataRange().getValues();
         for (var s = 1; s < setValues.length; s++) {
-          if (setValues[s][0] === "logoUrl") settings.logoUrl = String(setValues[s][1] || "");
-          if (setValues[s][0] === "logoText") settings.logoText = String(setValues[s][1] || "ALVIAL");
+          var key = String(setValues[s][0]);
+          var val = String(setValues[s][1] || "");
+          settings[key] = val;
         }
       }
       
@@ -539,6 +549,53 @@ function doPost(e) {
       return jsonResponse({ status: "success", message: "Beat actualizado exitosamente" });
     }
     
+    // ELIMINAR BEAT
+    if (action === "deleteBeat") {
+      var id = data.id;
+      var sheet = ss.getSheetByName("Beats") || ss.getSheetByName("beats") || ss.getSheets()[0];
+      var values = sheet.getDataRange().getValues();
+      var foundRow = -1;
+      
+      for (var i = 1; i < values.length; i++) {
+        if (String(values[i][0]) === String(id)) {
+          foundRow = i + 1;
+          break;
+        }
+      }
+      
+      if (foundRow !== -1) {
+        sheet.deleteRow(foundRow);
+        return jsonResponse({ status: "success", message: "Beat eliminado permanentemente" });
+      } else {
+        var defaultBeat = getDefaultBeatById(id);
+        if (defaultBeat) {
+          var defaultTendencia = true;
+          var defaultDropeado = false;
+          if (String(id).indexOf("rel-") === 0) {
+            defaultTendencia = false;
+            defaultDropeado = true;
+          }
+          sheet.appendRow([
+            defaultBeat.id,
+            defaultBeat.title,
+            defaultBeat.producer,
+            defaultBeat.tags.join(", "),
+            defaultBeat.bpm,
+            defaultBeat.key,
+            defaultBeat.price.replace("$", ""),
+            defaultBeat.audioUrl,
+            defaultBeat.img,
+            new Date().toISOString(),
+            false, // Expuesto = FALSE (eliminado del catálogo)
+            defaultTendencia,
+            defaultDropeado
+          ]);
+          return jsonResponse({ status: "success", message: "Beat por defecto deshabilitado permanentemente" });
+        }
+      }
+      return jsonResponse({ status: "error", message: "Beat no encontrado en la base de datos" });
+    }
+    
     // PUBLICAR NOTICIA
     if (action === "uploadNews") {
       var folderId = data.folderId;
@@ -777,7 +834,7 @@ function doPost(e) {
       return jsonResponse({ status: "error", message: "Tipo no válido para toggleStatus" });
     }
     
-    // ACTUALIZAR LOGOTIPO DEL SITIO
+    // ACTUALIZAR LOGOTIPO Y AJUSTES DEL SITIO
     if (action === "updateSettings") {
       var settingsSheet = ss.getSheetByName("Ajustes") || ss.insertSheet("Ajustes");
       var logoUrl = data.existingLogo || "";
@@ -791,23 +848,45 @@ function doPost(e) {
         logoUrl = "https://lh3.googleusercontent.com/d/" + imgFile.getId();
       }
       
+      var settingsToSave = {
+        "logoUrl": logoUrl,
+        "paypalEmail": data.paypalEmail || "",
+        "binanceId": data.binanceId || "",
+        "zinliPhone": data.zinliPhone || ""
+      };
+      
       var range = settingsSheet.getDataRange();
       var values = range.getValues();
-      var foundLogoUrl = false;
-      for (var i = 1; i < values.length; i++) {
-        if (values[i][0] === "logoUrl") {
-          settingsSheet.getRange(i + 1, 2).setValue(logoUrl);
-          foundLogoUrl = true;
-          break;
+      
+      for (var key in settingsToSave) {
+        var val = settingsToSave[key];
+        var found = false;
+        for (var i = 1; i < values.length; i++) {
+          if (values[i][0] === key) {
+            settingsSheet.getRange(i + 1, 2).setValue(val);
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          if (values.length === 1 && values[0][0] === "") {
+            settingsSheet.appendRow(["Clave", "Valor"]);
+          }
+          settingsSheet.appendRow([key, val]);
+          // Recargar valores para evitar duplicados en el bucle
+          range = settingsSheet.getDataRange();
+          values = range.getValues();
         }
       }
-      if (!foundLogoUrl) {
-        if (values.length === 1 && values[0][0] === "") {
-          settingsSheet.appendRow(["Clave", "Valor"]);
-        }
-        settingsSheet.appendRow(["logoUrl", logoUrl]);
-      }
-      return jsonResponse({ status: "success", message: "Configuraciones guardadas", logoUrl: logoUrl });
+      
+      return jsonResponse({
+        status: "success",
+        message: "Configuraciones guardadas",
+        logoUrl: logoUrl,
+        paypalEmail: settingsToSave.paypalEmail,
+        binanceId: settingsToSave.binanceId,
+        zinliPhone: settingsToSave.zinliPhone
+      });
     }
     
     // GUARDAR PLANTILLAS DE LICENCIAS

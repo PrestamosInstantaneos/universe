@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import { X, Search, Play, Pause, ShoppingCart, Music, SlidersHorizontal, RefreshCw } from "lucide-react"
-import { useCart, ALL_TRACKS, Track } from "./cart-context"
+import { useCart, Track } from "./cart-context"
 
 export function SearchModal() {
   const {
@@ -13,7 +13,8 @@ export function SearchModal() {
     searchSelectedTags,
     toggleSearchTag,
     clearSearchFilters,
-    openLicenseModal
+    openLicenseModal,
+    allTracks
   } = useCart()
 
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null)
@@ -37,13 +38,14 @@ export function SearchModal() {
 
   if (!isSearchOpen) return null
 
-  // Obtener todas las etiquetas únicas del catálogo de pistas
   const allUniqueTags = Array.from(
-    new Set(ALL_TRACKS.flatMap(t => t.tags.map(tag => tag.toUpperCase())))
+    new Set(allTracks.flatMap(t => t.tags.map(tag => tag.toUpperCase())))
   ).sort()
 
   // Filtrar pistas dinámicamente según la consulta de texto y las etiquetas seleccionadas
-  const filteredTracks = ALL_TRACKS.filter(track => {
+  const filteredTracks = allTracks.filter(track => {
+    if (track.expuesto === false) return false
+    
     const query = searchQuery.toLowerCase().trim()
     const matchesQuery = !query || 
       track.title.toLowerCase().includes(query) ||
@@ -91,7 +93,7 @@ export function SearchModal() {
           <div className="flex items-center gap-2">
             <Search className="size-5 text-primary" />
             <h3 className="font-heading text-sm font-black uppercase tracking-wider text-foreground">
-              Buscar en FRZN Store
+              Buscar en ALVIAL Store
             </h3>
           </div>
 

@@ -21,6 +21,7 @@ import {
   Edit,
   PlusCircle,
   Megaphone,
+  Trash2,
   X
 } from "lucide-react"
 
@@ -47,7 +48,7 @@ type AdminStats = {
 
 export default function AdminPage() {
   const [mounted, setMounted] = useState(false)
-  const { user, logoutUser, refreshCatalog, allTracks, allNews, licenses, logoUrl } = useCart()
+  const { user, logoutUser, refreshCatalog, allTracks, allNews, licenses, logoUrl, paypalEmail, binanceId, zinliPhone, deleteBeat } = useCart()
 
   // Tab State: stats | upload | catalog | news | settings
   const [activeTab, setActiveTab] = useState<"stats" | "upload" | "catalog" | "news" | "settings">("stats")
@@ -57,6 +58,17 @@ export default function AdminPage() {
   const [localLicenses, setLocalLicenses] = useState<any[]>([])
   const [selectedLicenseType, setSelectedLicenseType] = useState<string>("basic")
   const [newConditionText, setNewConditionText] = useState<string>("")
+
+  // Payment settings state
+  const [localPaypalEmail, setLocalPaypalEmail] = useState("")
+  const [localBinanceId, setLocalBinanceId] = useState("")
+  const [localZinliPhone, setLocalZinliPhone] = useState("")
+
+  useEffect(() => {
+    if (paypalEmail) setLocalPaypalEmail(paypalEmail)
+    if (binanceId) setLocalBinanceId(binanceId)
+    if (zinliPhone) setLocalZinliPhone(zinliPhone)
+  }, [paypalEmail, binanceId, zinliPhone])
 
   useEffect(() => {
     if (licenses) {
@@ -467,20 +479,26 @@ export default function AdminPage() {
     }
   }
 
-  const handleSaveLogo = async (e: React.FormEvent) => {
+  const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!logoFile) {
-      setStatus("error")
-      setStatusMessage("Por favor selecciona una imagen de logotipo.")
-      return
-    }
 
     setStatus("loading")
-    setStatusMessage("Procesando imagen de logotipo...")
+    setStatusMessage("Guardando configuraciones y ajustes...")
 
     try {
-      const logoResult = await readFileAsBase64(logoFile)
-      setStatusMessage("Subiendo logotipo a Google Drive...")
+      let imageData = ""
+      let imageMime = ""
+      let imageName = ""
+
+      if (logoFile) {
+        setStatusMessage("Procesando imagen de logotipo...")
+        const logoResult = await readFileAsBase64(logoFile)
+        imageData = logoResult.data
+        imageMime = logoResult.mime
+        imageName = logoFile.name
+      }
+
+      setStatusMessage("Enviando ajustes al servidor...")
 
       const appsScriptUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL
       const folderId = process.env.NEXT_PUBLIC_DRIVE_FOLDER_ID
@@ -495,25 +513,51 @@ export default function AdminPage() {
         body: JSON.stringify({
           action: "updateSettings",
           folderId,
-          imageData: logoResult.data,
-          imageMime: logoResult.mime,
-          imageName: logoFile.name
+          imageData,
+          imageMime,
+          imageName,
+          existingLogo: logoUrl,
+          paypalEmail: localPaypalEmail,
+          binanceId: localBinanceId,
+          zinliPhone: localZinliPhone
         })
       })
 
       const result = await response.json()
       if (result.status === "success") {
         setStatus("success")
-        setStatusMessage("¡Logotipo actualizado correctamente!")
+        setStatusMessage("¡Configuraciones guardadas y actualizadas exitosamente!")
         setLogoFile(null)
         await refreshCatalog()
       } else {
-        throw new Error(result.message || "Error al subir logotipo.")
+        throw new Error(result.message || "Error al actualizar configuraciones.")
       }
     } catch (err: any) {
       console.error(err)
       setStatus("error")
-      setStatusMessage(err.message || "Error inesperado al subir logotipo.")
+      setStatusMessage(err.message || "Error al guardar configuraciones.")
+    }
+  }
+
+  const handleDeleteBeat = async (id: string) => {
+    if (!confirm("¿Estás seguro de que deseas eliminar este beat permanentemente del catálogo?")) return
+
+    setStatus("loading")
+    setStatusMessage("Eliminando beat...")
+
+    try {
+      const success = await deleteBeat(id)
+      if (success) {
+        setStatus("success")
+        setStatusMessage("¡Beat eliminado exitosamente del catálogo!")
+        fetchStats()
+      } else {
+        throw new Error("No se pudo eliminar el beat. Por favor, inténtalo de nuevo.")
+      }
+    } catch (err: any) {
+      console.error(err)
+      setStatus("error")
+      setStatusMessage(err.message || "Error al eliminar beat.")
     }
   }
 
@@ -632,12 +676,12 @@ export default function AdminPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
 
-          {/* SECCIÓN LOGO */}
+          {/* SECCIÓN LOGO Y PAGOS */}
           <div className="bg-zinc-950/45 border border-white/5 rounded-lg p-6 space-y-6">
             <div>
-              <h4 className="font-heading text-xs font-bold text-foreground uppercase tracking-widest border-b border-white/5 pb-2">Logotipo de ALVIAL</h4>
+              <h4 className="font-heading text-xs font-bold text-foreground uppercase tracking-widest border-b border-white/5 pb-2">Ajustes de Marca y Pagos</h4>
               <p className="font-mono text-[8px] text-foreground/40 uppercase mt-1.5 leading-relaxed">
-                Personaliza la imagen del logotipo de la cabecera. Si no subes ninguna, se mostrará el texto "ALVIAL" por defecto.
+                Configura el logotipo de ALVIAL y las direcciones/identificadores receptores para las compras de beats.
               </p>
             </div>
 
@@ -651,7 +695,7 @@ export default function AdminPage() {
                 )}
               </div>
 
-              <form onSubmit={handleSaveLogo} className="space-y-4">
+              <form onSubmit={handleSaveSettings} className="space-y-4">
                 <div className="space-y-1.5">
                   <label className="font-mono text-[8px] text-foreground/50 uppercase font-bold">Subir Nuevo Logo</label>
                   <div className="relative flex items-center justify-center border border-dashed border-white/10 hover:border-primary/50 bg-zinc-900/20 p-4 rounded text-center cursor-pointer">
@@ -665,18 +709,55 @@ export default function AdminPage() {
                     <span className="font-mono text-[8.5px] font-bold text-amber-500 uppercase block">💡 Recomendaciones:</span>
                     <ul className="list-disc list-inside font-mono text-[8px] text-foreground/50 space-y-1 leading-normal">
                       <li>Usar formato PNG con fondo transparente</li>
-                      <li>Proporción recomendada de aspecto 3:1</li>
                       <li>Dimensiones recomendadas: 150px de ancho x 50px de alto</li>
                     </ul>
                   </div>
                 </div>
 
-                <div className="flex gap-3">
+                {/* Métodos de Pago */}
+                <div className="border-t border-white/5 pt-4 space-y-4 text-left">
+                  <h5 className="font-heading text-[10px] font-bold text-primary uppercase tracking-wider">Configuración de Pasarelas de Pago</h5>
+                  
+                  <div className="space-y-1.5">
+                    <label className="font-mono text-[8px] text-foreground/50 uppercase font-bold block">Correo de PayPal</label>
+                    <input
+                      type="email"
+                      value={localPaypalEmail}
+                      onChange={(e) => setLocalPaypalEmail(e.target.value)}
+                      placeholder="Ej. ventas@alvial.com"
+                      className="w-full bg-zinc-900/50 border border-white/10 hover:border-white/20 focus:border-primary text-foreground font-mono text-xs p-2.5 rounded outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-mono text-[8px] text-foreground/50 uppercase font-bold block">Binance Pay ID</label>
+                    <input
+                      type="text"
+                      value={localBinanceId}
+                      onChange={(e) => setLocalBinanceId(e.target.value)}
+                      placeholder="Ej. 123456789"
+                      className="w-full bg-zinc-900/50 border border-white/10 hover:border-white/20 focus:border-primary text-foreground font-mono text-xs p-2.5 rounded outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-mono text-[8px] text-foreground/50 uppercase font-bold block">Teléfono o Email de Zinli</label>
+                    <input
+                      type="text"
+                      value={localZinliPhone}
+                      onChange={(e) => setLocalZinliPhone(e.target.value)}
+                      placeholder="Ej. +584123456789 o correo@zinli.com"
+                      className="w-full bg-zinc-900/50 border border-white/10 hover:border-white/20 focus:border-primary text-foreground font-mono text-xs p-2.5 rounded outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-2">
                   <button
                     type="submit"
-                    className="flex-1 flex items-center justify-center gap-1.5 bg-primary hover:bg-primary/95 text-primary-foreground font-mono text-[9.5px] tracking-wider font-bold py-2.5 rounded cursor-pointer transition-colors animate-all"
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-primary hover:bg-primary/95 text-primary-foreground font-mono text-[9.5px] tracking-wider font-bold py-2.5 rounded cursor-pointer transition-colors"
                   >
-                    GUARDAR LOGO
+                    GUARDAR AJUSTES
                   </button>
                   {logoUrl && (
                     <button
@@ -684,7 +765,7 @@ export default function AdminPage() {
                       onClick={handleResetLogo}
                       className="border border-red-500/30 hover:bg-red-500 hover:text-white text-red-400 font-mono text-[9.5px] tracking-wider font-bold px-4 rounded cursor-pointer transition-colors"
                     >
-                      RESTABLECER
+                      RESTABLECER LOGO
                     </button>
                   )}
                 </div>
@@ -953,13 +1034,22 @@ export default function AdminPage() {
                     </label>
                   </div>
 
-                  <button
-                    onClick={() => openEditBeatModal(track)}
-                    className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors uppercase font-bold text-[8.5px]"
-                  >
-                    <Edit className="size-3" />
-                    EDITAR
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => openEditBeatModal(track)}
+                      className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors uppercase font-bold text-[8.5px]"
+                    >
+                      <Edit className="size-3" />
+                      EDITAR
+                    </button>
+                    <button
+                      onClick={() => handleDeleteBeat(track.id)}
+                      className="flex items-center gap-1 text-red-400 hover:text-red-300 transition-colors uppercase font-bold text-[8.5px]"
+                    >
+                      <Trash2 className="size-3" />
+                      ELIMINAR
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
