@@ -44,7 +44,7 @@ function doGet(e) {
       if (values.length <= 1) {
         // Asegurar que el header esté escrito
         sheet.clearContents();
-        sheet.appendRow(["ID", "Titulo", "Productor", "Tags", "BPM", "Tonalidad", "Precio", "AudioUrl", "FotoUrl", "FechaSubida", "Expuesto", "Tendencia", "Dropeado"]);
+        sheet.appendRow(["ID", "Titulo", "Productor", "Tags", "BPM", "Tonalidad", "Precio", "AudioUrl", "FotoUrl", "FechaSubida", "Expuesto", "Tendencia", "Dropeado", "Eliminado"]);
         
         var defaultBeatsList = [
           ["1", "Hard melodic free...", "nToucan", "TRAP, NEÓN", 140, "G# Minor", 10.99, "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", "/images/artist-1.png", new Date().toISOString(), true, true, false],
@@ -77,10 +77,12 @@ function doGet(e) {
         var expuestoVal = (values[i][10] !== undefined) ? values[i][10] : "";
         var tendenciaVal = (values[i][11] !== undefined) ? values[i][11] : "";
         var dropeadoVal = (values[i][12] !== undefined) ? values[i][12] : "";
+        var eliminadoVal = (values[i][13] !== undefined) ? values[i][13] : "";
 
         var expuesto = (expuestoVal !== false && expuestoVal !== "FALSE");
         var tendencia = (tendenciaVal !== false && tendenciaVal !== "FALSE");
         var dropeado = (dropeadoVal === true || dropeadoVal === "TRUE");
+        var eliminado = (eliminadoVal === true || eliminadoVal === "TRUE");
 
         tracks.push({
           id: String(values[i][0]),
@@ -95,7 +97,8 @@ function doGet(e) {
           dateAdded: String(values[i][9] || ""),
           expuesto: expuesto,
           tendencia: tendencia,
-          dropeado: dropeado
+          dropeado: dropeado,
+          eliminado: eliminado
         });
       }
       
@@ -463,7 +466,8 @@ function doPost(e) {
         new Date().toISOString(),
         expuesto,
         tendencia,
-        dropeado
+        dropeado,
+        false // Eliminado
       ]);
       
       return jsonResponse({ status: "success", message: "Beat subido exitosamente", id: newId });
@@ -520,7 +524,8 @@ function doPost(e) {
             new Date().toISOString(),
             expuesto,
             tendencia,
-            dropeado
+            dropeado,
+            false // Eliminado
           ]);
           return jsonResponse({ status: "success", message: "Beat por defecto registrado y actualizado" });
         }
@@ -536,6 +541,7 @@ function doPost(e) {
       sheet.getRange(foundRow, 11).setValue(expuesto);
       sheet.getRange(foundRow, 12).setValue(tendencia);
       sheet.getRange(foundRow, 13).setValue(dropeado);
+      sheet.getRange(foundRow, 14).setValue(false); // Resetear a no eliminado
       
       if (data.imageData && data.imageMime && folderId) {
         var folder = DriveApp.getFolderById(folderId);
@@ -563,12 +569,16 @@ function doPost(e) {
         }
       }
       
-      if (foundRow !== -1) {
-        sheet.deleteRow(foundRow);
-        return jsonResponse({ status: "success", message: "Beat eliminado permanentemente" });
-      } else {
-        var defaultBeat = getDefaultBeatById(id);
-        if (defaultBeat) {
+      var defaultBeat = getDefaultBeatById(id);
+      
+      if (defaultBeat) {
+        // Es un beat por defecto. No lo borramos físicamente de la hoja.
+        // Si ya tiene una fila, actualizamos Expuesto = FALSE (col 11) y Eliminado = TRUE (col 14)
+        // Si no tiene una fila, la añadimos con esos valores.
+        if (foundRow !== -1) {
+          sheet.getRange(foundRow, 11).setValue(false); // Expuesto = FALSE
+          sheet.getRange(foundRow, 14).setValue(true);  // Eliminado = TRUE
+        } else {
           var defaultTendencia = true;
           var defaultDropeado = false;
           if (String(id).indexOf("rel-") === 0) {
@@ -586,11 +596,18 @@ function doPost(e) {
             defaultBeat.audioUrl,
             defaultBeat.img,
             new Date().toISOString(),
-            false, // Expuesto = FALSE (eliminado del catálogo)
-            defaultTendencia,
-            defaultDropeado
+            false,             // Expuesto = FALSE
+            defaultTendencia,  // Tendencia
+            defaultDropeado,   // Dropeado
+            true               // Eliminado = TRUE (col 14)
           ]);
-          return jsonResponse({ status: "success", message: "Beat por defecto deshabilitado permanentemente" });
+        }
+        return jsonResponse({ status: "success", message: "Beat por defecto deshabilitado en el catálogo" });
+      } else {
+        // Es un beat personalizado. Lo borramos físicamente si existe.
+        if (foundRow !== -1) {
+          sheet.deleteRow(foundRow);
+          return jsonResponse({ status: "success", message: "Beat personalizado eliminado permanentemente" });
         }
       }
       return jsonResponse({ status: "error", message: "Beat no encontrado en la base de datos" });
@@ -956,7 +973,8 @@ function doPost(e) {
             new Date().toISOString(),
             false, // Expuesto = FALSE
             defaultTendencia,
-            defaultDropeado
+            defaultDropeado,
+            false // Eliminado
           ]);
           return jsonResponse({ status: "success", message: "Beat por defecto creado y despublicado automáticamente" });
         }

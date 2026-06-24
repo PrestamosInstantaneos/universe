@@ -18,6 +18,7 @@ export type Track = {
   expuesto?: boolean
   tendencia?: boolean
   dropeado?: boolean
+  eliminado?: boolean
 }
 
 export type LicenseType = 'basic' | 'premium' | 'unlimited' | 'exclusive'
@@ -416,7 +417,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             ...t,
             expuesto: t.expuesto !== false && t.expuesto !== "FALSE",
             tendencia: t.tendencia !== false && t.tendencia !== "FALSE",
-            dropeado: t.dropeado === true || t.dropeado === "TRUE"
+            dropeado: t.dropeado === true || t.dropeado === "TRUE",
+            eliminado: t.eliminado === true || t.eliminado === "TRUE"
           }))
 
           // Merge fetched tracks with ALL_TRACKS to preserve local metadata/ads/emojis
@@ -430,7 +432,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             })
           })
           
-          const combined = Array.from(trackMap.values())
+          const combined = Array.from(trackMap.values()).filter(t => !t.eliminado)
           setAllTracks(combined)
           setTracks(combined.filter(t => t.expuesto !== false && t.tendencia !== false))
           setReleases(combined.filter(t => t.expuesto !== false && t.dropeado === true))
