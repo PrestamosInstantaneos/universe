@@ -546,13 +546,13 @@ export default function AdminPage() {
     setStatusMessage("Eliminando beat...")
 
     try {
-      const success = await deleteBeat(id)
-      if (success) {
+      const result = await deleteBeat(id)
+      if (result.success) {
         setStatus("success")
-        setStatusMessage("¡Beat eliminado exitosamente del catálogo!")
+        setStatusMessage(result.message || "¡Beat eliminado exitosamente del catálogo!")
         fetchStats()
       } else {
-        throw new Error("No se pudo eliminar el beat. Por favor, inténtalo de nuevo.")
+        throw new Error(result.message || "No se pudo eliminar el beat. Por favor, inténtalo de nuevo.")
       }
     } catch (err: any) {
       console.error(err)

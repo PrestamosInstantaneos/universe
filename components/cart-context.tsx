@@ -362,7 +362,7 @@ type CartContextType = {
   confirmPurchase: () => void
   closeDownloads: () => void
   openDownloads: () => void
-  deleteBeat: (id: string) => Promise<boolean>
+  deleteBeat: (id: string) => Promise<{ success: boolean; message?: string }>
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
@@ -744,12 +744,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsDownloadsOpen(true)
   }
 
-  const deleteBeat = async (id: string): Promise<boolean> => {
+  const deleteBeat = async (id: string): Promise<{ success: boolean; message?: string }> => {
     try {
       const appsScriptUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL
       if (!appsScriptUrl) {
         console.warn("NEXT_PUBLIC_APPS_SCRIPT_URL not configured")
-        return false
+        return { success: false, message: "URL de Apps Script no configurada en las variables de entorno." }
       }
       const response = await fetch(appsScriptUrl, {
         method: "POST",
@@ -762,12 +762,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const result = await response.json()
       if (result.status === "success") {
         await refreshCatalog()
-        return true
+        return { success: true, message: result.message }
       }
-      return false
-    } catch (e) {
+      return { success: false, message: result.message || "Error de respuesta del servidor." }
+    } catch (e: any) {
       console.error("Error deleting beat:", e)
-      return false
+      return { success: false, message: e.message || "Error de red/conexión." }
     }
   }
 
