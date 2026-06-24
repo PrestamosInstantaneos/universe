@@ -78,10 +78,12 @@ export function ReleasesSection() {
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null)
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
 
-  // Safe helper to get releases or fallbacks
-  const col1Tracks = [releases[0] || RELEASES[0], releases[1] || RELEASES[1]].filter(Boolean)
-  const col2Tracks = [releases[2] || RELEASES[2], releases[3] || RELEASES[3]].filter(Boolean)
-  const col3Tracks = [releases[4] || RELEASES[4], releases[5] || RELEASES[5]].filter(Boolean)
+  if (releases.length === 0) return null
+
+  // Safe helper to get releases
+  const col1Tracks = [releases[0], releases[1]].filter(Boolean)
+  const col2Tracks = [releases[2], releases[3]].filter(Boolean)
+  const col3Tracks = [releases[4], releases[5]].filter(Boolean)
 
   // Escuchar el estado de reproducción del reproductor de audio global
   useEffect(() => {
