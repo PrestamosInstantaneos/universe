@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { useCart, Track, NewsPost } from "@/components/cart-context"
+import { useCart, Track, NewsPost, GenreItem } from "@/components/cart-context"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { 
@@ -48,7 +48,7 @@ type AdminStats = {
 
 export default function AdminPage() {
   const [mounted, setMounted] = useState(false)
-  const { user, logoutUser, refreshCatalog, allTracks, allNews, licenses, logoUrl, paypalEmail, binanceId, zinliPhone, deleteBeat } = useCart()
+  const { user, logoutUser, refreshCatalog, allTracks, allNews, licenses, logoUrl, paypalEmail, binanceId, zinliPhone, deleteBeat, genres, updateGenres } = useCart()
 
   // Tab State: stats | upload | catalog | news | settings
   const [activeTab, setActiveTab] = useState<"stats" | "upload" | "catalog" | "news" | "settings">("stats")
@@ -75,6 +75,20 @@ export default function AdminPage() {
       setLocalLicenses(JSON.parse(JSON.stringify(licenses)))
     }
   }, [licenses])
+
+  // Géneros Populares
+  const [localGenres, setLocalGenres] = useState<GenreItem[]>([])
+  const [genreFiles, setGenreFiles] = useState<{ [id: string]: File | null }>({})
+
+  useEffect(() => {
+    if (genres) {
+      setLocalGenres(JSON.parse(JSON.stringify(genres)))
+    }
+  }, [genres])
+
+  const updateGenreField = (id: string, field: "name" | "tag", value: string) => {
+    setLocalGenres(prev => prev.map(g => g.id === id ? { ...g, [field]: value } : g))
+  }
 
   // Local state copies for instant toggles
   const [localTracks, setLocalTracks] = useState<Track[]>([])
@@ -239,7 +253,7 @@ export default function AdminPage() {
       const result = await response.json()
       if (result.status === "success") {
         setStatus("success")
-        setStatusMessage("¡Beat subido exitosamente a Google Drive y Sheets!")
+        setStatusMessage("¡Beat subido exitosamente!")
         await refreshCatalog()
         fetchStats()
 
@@ -667,6 +681,42 @@ export default function AdminPage() {
     }
   }
 
+  const handleSaveGenres = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setStatus("loading")
+    setStatusMessage("Procesando imágenes de géneros populares...")
+
+    try {
+      const updatedList = await Promise.all(localGenres.map(async (genre) => {
+        const file = genreFiles[genre.id]
+        if (file) {
+          const fileResult = await readFileAsBase64(file)
+          return {
+            ...genre,
+            imageData: fileResult.data,
+            imageMime: fileResult.mime,
+            imageName: file.name
+          }
+        }
+        return genre
+      }))
+
+      setStatusMessage("Actualizando géneros populares en el servidor...")
+      const result = await updateGenres(updatedList)
+      if (result.success) {
+        setStatus("success")
+        setStatusMessage("¡Géneros populares actualizados exitosamente!")
+        setGenreFiles({})
+      } else {
+        throw new Error(result.message || "Error al actualizar los géneros populares.")
+      }
+    } catch (err: any) {
+      console.error(err)
+      setStatus("error")
+      setStatusMessage(err.message || "Error al guardar géneros populares.")
+    }
+  }
+
   const renderSettingsTab = () => {
     const activeLic = localLicenses.find(l => l.type === selectedLicenseType)
 
@@ -894,6 +944,97 @@ export default function AdminPage() {
           </div>
 
         </div>
+
+        {/* SECCIÓN GÉNEROS POPULARES */}
+        <div className="bg-zinc-950/45 border border-white/5 rounded-lg p-6 space-y-6">
+          <div>
+            <h4 className="font-heading text-xs font-bold text-foreground uppercase tracking-widest border-b border-white/5 pb-2">Configuración de Géneros Populares (Hexágonos)</h4>
+            <p className="font-mono text-[8px] text-foreground/40 uppercase mt-1.5 leading-relaxed">
+              Personaliza el nombre, tag de búsqueda e imagen de portada para cada uno de los 7 hexágonos flotantes de la página de inicio.
+              Si dejas un género vacío (sin nombre o sin tag), se mostrará como un hexágono visual grisáceo no interactivo.
+            </p>
+          </div>
+
+          <form onSubmit={handleSaveGenres} className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {localGenres.map((genre, idx) => {
+                const isSelectedFile = !!genreFiles[genre.id]
+                return (
+                  <div key={genre.id} className="bg-zinc-900/20 border border-white/5 p-4 rounded space-y-3">
+                    <div className="flex justify-between items-center border-b border-white/5 pb-1.5">
+                      <span className="font-mono text-[10px] font-bold text-primary">HEXÁGONO {idx + 1}</span>
+                      {genre.img && (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={genre.img} alt="" className="size-6 object-cover rounded border border-white/10" />
+                      )}
+                    </div>
+
+                    <div className="space-y-2 text-[10px] font-mono">
+                      <div className="space-y-1">
+                        <label className="text-[8px] text-foreground/50 uppercase font-bold">Nombre del Género</label>
+                        <input
+                          type="text"
+                          value={genre.name}
+                          onChange={(e) => updateGenreField(genre.id, "name", e.target.value)}
+                          placeholder="Ej. Hip Hop"
+                          className="w-full bg-zinc-900 border border-white/10 p-2 rounded text-xs text-foreground outline-none"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[8px] text-foreground/50 uppercase font-bold">Tag de Búsqueda</label>
+                        <input
+                          type="text"
+                          value={genre.tag}
+                          onChange={(e) => updateGenreField(genre.id, "tag", e.target.value)}
+                          placeholder="Ej. TRAP"
+                          className="w-full bg-zinc-900 border border-white/10 p-2 rounded text-xs text-foreground outline-none"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[8px] text-foreground/50 uppercase font-bold block">Foto de Portada</label>
+                        <div className="relative flex items-center justify-center border border-dashed border-white/10 hover:border-primary/50 bg-zinc-900/30 p-2 rounded text-center cursor-pointer">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0] || null
+                              setGenreFiles(prev => ({ ...prev, [genre.id]: file }))
+                            }}
+                            className="absolute inset-0 size-full opacity-0 cursor-pointer"
+                          />
+                          <span className="text-[8.5px] text-foreground/60 flex items-center gap-1">
+                            <ImageIcon className="size-3.5 text-primary shrink-0" />
+                            {isSelectedFile ? genreFiles[genre.id]!.name : "Reemplazar imagen..."}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className="pt-2 border-t border-white/5 flex justify-end">
+              <button
+                type="submit"
+                disabled={status === "loading"}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-mono text-[9.5px] tracking-widest font-bold py-3 px-6 rounded cursor-pointer transition-colors"
+              >
+                {status === "loading" && statusMessage.includes("géneros") ? (
+                  <>
+                    <Loader2 className="size-3.5 animate-spin" />
+                    GUARDANDO GÉNEROS...
+                  </>
+                ) : (
+                  "GUARDAR GÉNEROS POPULARES"
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+
       </div>
     )
   }

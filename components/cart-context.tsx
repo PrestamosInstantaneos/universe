@@ -39,6 +39,13 @@ export type CartItem = {
   selected: boolean
 }
 
+export type GenreItem = {
+  id: string
+  name: string
+  tag: string
+  img: string
+}
+
 export type GoogleUser = {
   id: string
   email: string
@@ -332,6 +339,8 @@ type CartContextType = {
   paypalEmail: string
   binanceId: string
   zinliPhone: string
+  genres: GenreItem[]
+  updateGenres: (updatedList: any[]) => Promise<{ success: boolean; message?: string }>
   // News
   news: NewsPost[]
   allNews: NewsPost[]
@@ -399,6 +408,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [paypalEmail, setPaypalEmail] = useState<string>("")
   const [binanceId, setBinanceId] = useState<string>("")
   const [zinliPhone, setZinliPhone] = useState<string>("")
+  const [genres, setGenres] = useState<GenreItem[]>([
+    { id: "1", name: "Hip Hop", tag: "TRAP", img: "/images/genre_hiphop.png" },
+    { id: "2", name: "Pop", tag: "NEÓN", img: "/images/genre_pop.png" },
+    { id: "3", name: "R&B", tag: "R&B", img: "/images/genre_rnb.png" },
+    { id: "4", name: "Rock", tag: "CLASSIC", img: "/images/genre_rock.png" },
+    { id: "5", name: "Electronic", tag: "HOUSE", img: "/images/genre_electronic.png" },
+    { id: "6", name: "Reggae", tag: "REGGAETÓN", img: "/images/genre_reggae.png" },
+    { id: "7", name: "Afrobeats", tag: "AFROBEATS", img: "/images/genre_afrobeats.png" }
+  ])
 
   const refreshCatalog = async () => {
     try {
@@ -447,6 +465,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           if (typeof result.settings.paypalEmail === "string") setPaypalEmail(result.settings.paypalEmail)
           if (typeof result.settings.binanceId === "string") setBinanceId(result.settings.binanceId)
           if (typeof result.settings.zinliPhone === "string") setZinliPhone(result.settings.zinliPhone)
+        }
+
+        if (Array.isArray(result.genres)) {
+          setGenres(result.genres)
         }
       }
 
@@ -773,6 +795,34 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const updateGenres = async (updatedList: any[]): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const appsScriptUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL
+      const folderId = process.env.NEXT_PUBLIC_DRIVE_FOLDER_ID
+      if (!appsScriptUrl || !folderId) {
+        return { success: false, message: "URL de Apps Script o Drive Folder ID no configurados." }
+      }
+      const response = await fetch(appsScriptUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "updateGenres",
+          folderId,
+          genres: updatedList
+        })
+      })
+      const result = await response.json()
+      if (result.status === "success") {
+        await refreshCatalog()
+        return { success: true, message: result.message }
+      }
+      return { success: false, message: result.message || "Error al actualizar géneros." }
+    } catch (err: any) {
+      console.error("Error updating genres:", err)
+      return { success: false, message: err.message || "Error de conexión." }
+    }
+  }
+
   const loginUser = async (idToken: string): Promise<boolean> => {
     setIsLoadingUser(true)
     try {
@@ -840,6 +890,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       paypalEmail,
       binanceId,
       zinliPhone,
+      genres,
+      updateGenres,
       // News
       news,
       allNews,

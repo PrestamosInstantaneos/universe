@@ -188,7 +188,40 @@ function doGet(e) {
         }
       }
       
-      return jsonResponse({ status: "success", tracks: tracks, licenses: licenses, settings: settings });
+      // Cargar géneros populares
+      var genres = [];
+      var genresSheet = ss.getSheetByName("Generos") || ss.getSheetByName("generos");
+      if (!genresSheet) {
+        genresSheet = ss.insertSheet("Generos");
+        genresSheet.appendRow(["ID", "Nombre", "Tag", "FotoUrl"]);
+        var defaultGenresList = [
+          ["1", "Hip Hop", "TRAP", "/images/genre_hiphop.png"],
+          ["2", "Pop", "NEÓN", "/images/genre_pop.png"],
+          ["3", "R&B", "R&B", "/images/genre_rnb.png"],
+          ["4", "Rock", "CLASSIC", "/images/genre_rock.png"],
+          ["5", "Electronic", "HOUSE", "/images/genre_electronic.png"],
+          ["6", "Reggae", "REGGAETÓN", "/images/genre_reggae.png"],
+          ["7", "Afrobeats", "AFROBEATS", "/images/genre_afrobeats.png"]
+        ];
+        for (var k = 0; k < defaultGenresList.length; k++) {
+          genresSheet.appendRow(defaultGenresList[k]);
+        }
+        genres = defaultGenresList.map(function(row) {
+          return { id: row[0], name: row[1], tag: row[2], img: row[3] };
+        });
+      } else {
+        var gValues = genresSheet.getDataRange().getValues();
+        for (var g = 1; g < gValues.length; g++) {
+          genres.push({
+            id: String(gValues[g][0]),
+            name: String(gValues[g][1] || ""),
+            tag: String(gValues[g][2] || ""),
+            img: String(gValues[g][3] || "")
+          });
+        }
+      }
+      
+      return jsonResponse({ status: "success", tracks: tracks, licenses: licenses, settings: settings, genres: genres });
     }
     
     // ACCIÓN: OBTENER NOTICIAS
@@ -932,6 +965,39 @@ function doPost(e) {
         ]);
       }
       return jsonResponse({ status: "success", message: "Plantillas de licencias actualizadas" });
+    }
+    
+    // GUARDAR GÉNEROS POPULARES
+    if (action === "updateGenres") {
+      var folderId = data.folderId;
+      var genresSheet = ss.getSheetByName("Generos") || ss.insertSheet("Generos");
+      
+      // Asegurar cabeceras
+      genresSheet.clearContents();
+      genresSheet.appendRow(["ID", "Nombre", "Tag", "FotoUrl"]);
+      
+      var incomingGenres = data.genres || [];
+      for (var k = 0; k < incomingGenres.length; k++) {
+        var item = incomingGenres[k];
+        var imgUrl = item.img || "";
+        
+        // Si hay una nueva imagen base64 para este género
+        if (item.imageData && item.imageMime && folderId) {
+          var folder = DriveApp.getFolderById(folderId);
+          var imgBlob = Utilities.newBlob(Utilities.base64Decode(item.imageData), item.imageMime, item.imageName || "genre_" + item.id + ".png");
+          var imgFile = folder.createFile(imgBlob);
+          imgFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+          imgUrl = "https://lh3.googleusercontent.com/d/" + imgFile.getId();
+        }
+        
+        genresSheet.appendRow([
+          String(item.id),
+          String(item.name || ""),
+          String(item.tag || ""),
+          imgUrl
+        ]);
+      }
+      return jsonResponse({ status: "success", message: "Géneros populares actualizados con éxito" });
     }
     
     // COMPRA EXCLUSIVA
