@@ -65,20 +65,52 @@ ALVIAL Records Inc.
     downloadTextFile(filename, content)
   }
 
-  const handleDownloadAudio = (item: CartItem, format: "MP3" | "WAV") => {
-    const filename = `${item.track.title.replace(/\s+/g, "_")}_(${item.track.producer})_[ALVIAL_${format}].${format.toLowerCase()}`
-    const content = `==================================================================
-ALVIAL AUDIO FILE DEMO (${format} FORMAT)
-==================================================================
-Track ID: ${item.track.id}
-Título: ${item.track.title}
-Productor: ${item.track.producer}
-Licencia: ${item.licenseType.toUpperCase()}
-Fidelidad: ${format === "WAV" ? "24-bit 44.1kHz High Definition" : "320kbps MP3 Stereo"}
+  const getDriveDownloadUrl = (url: string) => {
+    if (!url) return ""
+    if (url.startsWith("blob:") || url.startsWith("/") || url.startsWith("data:")) {
+      return url
+    }
+    const dMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/)
+    if (dMatch && dMatch[1]) {
+      return `https://docs.google.com/uc?export=download&id=${dMatch[1]}`
+    }
+    const idMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/)
+    if (idMatch && idMatch[1]) {
+      return `https://docs.google.com/uc?export=download&id=${idMatch[1]}`
+    }
+    return url
+  }
 
-* Nota: En un entorno de producción real, este enlace iniciaría la descarga del archivo de audio comprimido original (.mp3 o .wav de alta definición) alojado de forma segura en un servidor en la nube (AWS S3, Google Cloud Storage).*
-==================================================================`
-    downloadTextFile(filename, content)
+  const handleDownloadAudio = async (item: CartItem, format: "MP3" | "WAV") => {
+    const originalUrl = item.track.audioUrl
+    if (!originalUrl) {
+      alert("Error: No hay URL de audio disponible para este track.")
+      return
+    }
+
+    if (originalUrl.includes("lh3.googleusercontent.com") || originalUrl.includes("drive.google.com") || originalUrl.includes("docs.google.com")) {
+      const driveDownloadUrl = getDriveDownloadUrl(originalUrl)
+      window.open(driveDownloadUrl, "_blank")
+      return
+    }
+
+    try {
+      const response = await fetch(originalUrl)
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      const ext = format.toLowerCase()
+      const cleanTitle = item.track.title.replace(/\s+/g, "_")
+      link.setAttribute("download", `${cleanTitle}_(${item.track.producer})_[ALVIAL_${format}].${ext}`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.warn("CORS/Fetch error, falling back to window.open:", error)
+      window.open(originalUrl, "_blank")
+    }
   }
 
   const handleDownloadStems = (item: CartItem) => {
