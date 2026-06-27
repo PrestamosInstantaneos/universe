@@ -99,6 +99,32 @@ export function PaypalModal() {
 
   // Render Selector Screen
   const renderSelectionScreen = () => {
+    if (!user) {
+      return (
+        <div className="p-6 md:p-8 flex flex-col justify-between min-h-[400px]">
+          <div className="space-y-6 text-center my-auto">
+            <div className="mx-auto size-12 bg-primary/10 text-primary rounded-full flex items-center justify-center border border-primary/20">
+              <Lock className="size-5" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-heading text-base font-black text-foreground uppercase tracking-wider">Inicio de Sesión Requerido</h3>
+              <p className="font-mono text-[9px] leading-relaxed text-foreground/50 uppercase max-w-xs mx-auto">
+                Debes iniciar sesión con tu cuenta de Google en la barra superior para continuar y asegurar que tus descargas queden registradas.
+              </p>
+            </div>
+          </div>
+          <div className="pt-6 border-t border-white/5 mt-6">
+            <button
+              onClick={closeCheckout}
+              className="w-full border border-white/10 hover:bg-white/5 text-foreground font-mono text-xs tracking-widest font-bold py-3 rounded uppercase transition-colors cursor-pointer"
+            >
+              Cerrar y Volver
+            </button>
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div className="p-6 md:p-8 flex flex-col justify-between min-h-[400px]">
         <div className="space-y-6 text-center">

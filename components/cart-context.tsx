@@ -526,10 +526,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       refreshCatalog()
     }, 20000)
     return () => clearInterval(interval)
-  }, [])
-
-  useEffect(() => {
-    refreshCatalog()
   }, [user])
 
   // Cargar estado inicial desde localStorage si es posible

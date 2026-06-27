@@ -27,7 +27,8 @@ export function SiteHeader() {
     user,
     loginUser,
     logoutUser,
-    logoUrl
+    logoUrl,
+    orders
   } = useCart()
 
   const isAdmin = user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL || user?.email === "music.bests.page.is@gmail.com"
@@ -282,6 +283,19 @@ export function SiteHeader() {
             )}
           </ul>
         </nav>
+      )}
+
+      {/* Pending orders notification banner */}
+      {mounted && user && orders && orders.some((o: any) => o.status === "PENDIENTE") && (
+        <div className="bg-amber-500/10 border-t border-b border-amber-500/20 text-amber-500 font-mono text-[9px] py-2.5 px-6 text-center tracking-[0.15em] uppercase flex items-center justify-center gap-2 animate-in slide-in-from-top duration-300">
+          <span className="relative flex h-2 w-2 shrink-0">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+          </span>
+          <span>
+            TIENES {orders.filter((o: any) => o.status === "PENDIENTE").length} PEDIDO(S) EN ESPERA DE APROBACIÓN. LAS DESCARGAS SE ACTIVARÁN AUTOMÁTICAMENTE AL CONFIRMAR TU PAGO.
+          </span>
+        </div>
       )}
     </header>
   )

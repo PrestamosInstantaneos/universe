@@ -231,15 +231,19 @@ function doGet(e) {
       
       var emailVal = e.parameter.email;
       if (emailVal) {
+        var cleanEmail = emailVal.toString().toLowerCase().trim();
         var oValues = ordersSheet.getDataRange().getValues();
-        var isAdmin = (emailVal === settings.paypalEmail || emailVal === "music.bests.page.is@gmail.com" || emailVal === "cienciaytecnologia.alvial@gmail.com");
+        var isAdmin = (cleanEmail === String(settings.paypalEmail).toLowerCase().trim() || 
+                       cleanEmail === "music.bests.page.is@gmail.com" || 
+                       cleanEmail === "cienciaytecnologia.alvial@gmail.com" ||
+                       cleanEmail === "music.bests.page.is");
         
         for (var o = 1; o < oValues.length; o++) {
-          var oEmail = String(oValues[o][1]);
+          var oEmail = String(oValues[o][1]).toLowerCase().trim();
           var oStatus = String(oValues[o][7]);
           
           // El admin ve todos los pedidos, el cliente ve solo los suyos
-          if (isAdmin || oEmail === emailVal) {
+          if (isAdmin || oEmail === cleanEmail) {
             orders.push({
               id: String(oValues[o][0]),
               email: oEmail,
@@ -1090,7 +1094,7 @@ function doPost(e) {
         ordersSheet.appendRow(["ID", "Email", "TrackId", "Title", "LicenseType", "Price", "PaymentMethod", "Status", "Date"]);
       }
       
-      var email = data.email || "";
+      var email = String(data.email || "").toLowerCase().trim();
       var paymentMethod = data.paymentMethod || "";
       var items = data.items || [];
       

@@ -183,6 +183,7 @@ export default function AdminPage() {
       
       if (isAuthorized) {
         fetchStats()
+        refreshCatalog()
       }
     }
   }, [mounted, user])
@@ -1148,9 +1149,22 @@ export default function AdminPage() {
 
     return (
       <div className="space-y-6 text-left">
-        <div className="border-b border-white/5 pb-3">
-          <h3 className="font-heading text-lg font-bold text-foreground uppercase">Gestión de Pedidos y Compras</h3>
-          <p className="font-mono text-[9px] text-foreground/45 uppercase mt-1">Verifica las transferencias de PayPal, Binance Pay y Zinli, y libera las descargas de los usuarios</p>
+        <div className="border-b border-white/5 pb-3 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div>
+            <h3 className="font-heading text-lg font-bold text-foreground uppercase">Gestión de Pedidos y Compras</h3>
+            <p className="font-mono text-[9px] text-foreground/45 uppercase mt-1">Verifica las transferencias de PayPal, Binance Pay y Zinli, y libera las descargas de los usuarios</p>
+          </div>
+          <button
+            onClick={async () => {
+              setStatus("loading")
+              setStatusMessage("Actualizando pedidos...")
+              await refreshCatalog()
+              setStatus("idle")
+            }}
+            className="flex items-center justify-center gap-1.5 border border-primary/20 bg-primary/5 hover:bg-primary hover:text-primary-foreground text-primary font-mono text-[9px] font-bold px-4 py-2 rounded transition-all cursor-pointer uppercase shrink-0"
+          >
+            <RefreshCw className="size-3" /> Actualizar
+          </button>
         </div>
 
         <div className="bg-zinc-950/45 border border-white/5 rounded-lg p-5">

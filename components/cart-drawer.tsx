@@ -191,31 +191,26 @@ export function CartDrawer() {
             {/* Shield disclaimer */}
             <div className="flex items-start gap-2.5 bg-zinc-900/60 border border-white/5 rounded p-2.5">
               <ShieldCheck className="size-4 text-emerald-500 shrink-0 mt-0.5" />
-              <p className="font-mono text-[8px] text-foreground/45 leading-normal">
-                Transacción protegida por cifrado SSL. Entrega digital inmediata una vez verificado el pago por PayPal.
+              <p className="font-mono text-[8px] text-foreground/45 leading-normal uppercase">
+                Transacción protegida por cifrado SSL. Entrega digital tras la aprobación del administrador.
               </p>
             </div>
 
-            {/* Paypal button */}
+            {/* Payment options button */}
             {selectedItems.length > 0 ? (
               <button
                 onClick={startCheckout}
-                className="w-full flex items-center justify-center gap-2 bg-[#ffc439] hover:bg-[#f2b930] text-[#003087] font-sans text-xs font-black py-3 rounded-lg shadow-lg shadow-yellow-500/5 hover:shadow-yellow-500/15 transition-all active:scale-[0.98] cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-mono text-[10.5px] tracking-widest font-black py-3.5 rounded shadow-lg shadow-primary/10 transition-all active:scale-[0.98] cursor-pointer uppercase"
               >
-                {/* Simulated PayPal Pill Style */}
-                <span className="italic font-bold tracking-tight text-sm">Pay</span>
-                <span className="italic font-bold tracking-tight text-sm text-[#0079c1] -ml-1">Pal</span>
-                <span className="font-mono font-bold text-[10px] tracking-widest text-[#003087]/70 ml-1 uppercase">
-                  Pagar Ahora
-                </span>
+                SELECCIONAR MÉTODO DE PAGO
               </button>
             ) : (
               <div className="space-y-2">
                 <button
                   disabled
-                  className="w-full flex items-center justify-center gap-2 bg-zinc-800 text-zinc-500 font-mono text-[9px] tracking-wider font-bold py-3.5 rounded-lg cursor-not-allowed opacity-50"
+                  className="w-full flex items-center justify-center gap-2 bg-zinc-800 text-zinc-500 font-mono text-[9px] tracking-wider font-bold py-3.5 rounded cursor-not-allowed opacity-50 uppercase"
                 >
-                  PAGAR CON PAYPAL
+                  SELECCIONAR MÉTODO DE PAGO
                 </button>
                 <p className="text-center font-mono text-[7.5px] text-amber-500/80 uppercase tracking-wider font-bold">
                   ⚠️ Selecciona al menos un artículo para calcular total y pagar
