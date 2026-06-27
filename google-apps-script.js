@@ -31,6 +31,31 @@ function doGet(e) {
   try {
     var action = e.parameter.action;
     
+    // ACCIÓN: APROBAR O RECHAZAR PEDIDO DESDE EMAIL
+    if (action === "approveOrderFromEmail" || action === "rejectOrderFromEmail") {
+      var ss = getSpreadsheet();
+      var id = e.parameter.id;
+      var status = action === "approveOrderFromEmail" ? "APROBADO" : "RECHAZADO";
+      var ordersSheet = ss.getSheetByName("Pedidos");
+      if (ordersSheet) {
+        var values = ordersSheet.getDataRange().getValues();
+        var foundRow = -1;
+        for (var i = 1; i < values.length; i++) {
+          if (String(values[i][0]) === String(id)) {
+            foundRow = i + 1;
+            break;
+          }
+        }
+        if (foundRow !== -1) {
+          ordersSheet.getRange(foundRow, 8).setValue(status);
+          
+          var htmlContent = '<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ALVIAL - Pedido Actualizado</title><style>body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #09090b; color: #fafafa; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; } .card { background: #18181b; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 32px; text-align: center; max-width: 400px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5); } .icon { width: 64px; height: 64px; border-radius: 50%; background: ' + (status === "APROBADO" ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)") + '; color: ' + (status === "APROBADO" ? "#10b981" : "#ef4444") + '; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 24px; } h1 { font-size: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 12px; } p { font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.6; margin: 0 0 24px; } .btn { display: inline-block; background: ' + (status === "APROBADO" ? "#10b981" : "#ef4444") + '; color: #fff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }</style></head><body><div class="card"><div class="icon">' + (status === "APROBADO" ? "✓" : "✕") + '</div><h1>Pedido ' + (status === "APROBADO" ? "Aprobado" : "Rechazado") + '</h1><p>El pedido <strong>' + id + '</strong> ha sido actualizado a <strong>' + status + '</strong> en la base de datos de Google Sheets. El cliente ya tiene las descargas habilitadas en la plataforma de manera inmediata.</p><a href="#" class="btn" onclick="window.close()">Cerrar Ventana</a></div></body></html>';
+          return HtmlService.createHtmlOutput(htmlContent);
+        }
+      }
+      return HtmlService.createHtmlOutput("<html><body><h3 style='color:red;font-family:sans-serif;text-align:center;'>Error: Pedido no encontrado o base de datos corrupta.</h3></body></html>");
+    }
+    
     // ACCIÓN: OBTENER BEATS Y CONFIGURACIONES
     if (action === "getTracks") {
       var ss = getSpreadsheet();
@@ -1112,6 +1137,65 @@ function doPost(e) {
           "PENDIENTE",
           new Date().toISOString()
         ]);
+
+        // Enviar email de notificación al administrador
+        try {
+          var settings = getSettings(ss);
+          var adminEmail = settings.paypalEmail || "music.bests.page.is@gmail.com";
+          var webAppUrl = ScriptApp.getService().getUrl();
+          
+          if (webAppUrl) {
+            var approveLink = webAppUrl + "?action=approveOrderFromEmail&id=" + orderId;
+            var rejectLink = webAppUrl + "?action=rejectOrderFromEmail&id=" + orderId;
+            
+            var subject = "🎵 NUEVO PEDIDO PENDIENTE (" + orderId + ") - " + item.title;
+            var htmlBody = `
+              <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #fafafa; padding: 30px; max-width: 600px; border-radius: 10px; margin: 0 auto; border: 1px solid #27272a; text-align: left;">
+                <h2 style="color: #10b981; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; text-align: center; font-size: 18px;">NUEVO PEDIDO PENDIENTE DE APROBACIÓN</h2>
+                
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                  <tr style="border-bottom: 1px solid #27272a;">
+                    <td style="padding: 10px 0; color: #a1a1aa; font-weight: bold; font-size: 13px; width: 140px;">ID PEDIDO:</td>
+                    <td style="padding: 10px 0; font-weight: bold; color: #ffffff; font-size: 13px;">${orderId}</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid #27272a;">
+                    <td style="padding: 10px 0; color: #a1a1aa; font-weight: bold; font-size: 13px;">CLIENTE (EMAIL):</td>
+                    <td style="padding: 10px 0; color: #ffffff; font-size: 13px;">${email}</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid #27272a;">
+                    <td style="padding: 10px 0; color: #a1a1aa; font-weight: bold; font-size: 13px;">BEAT:</td>
+                    <td style="padding: 10px 0; color: #ffffff; font-weight: bold; font-size: 13px;">${item.title}</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid #27272a;">
+                    <td style="padding: 10px 0; color: #a1a1aa; font-weight: bold; font-size: 13px;">LICENCIA:</td>
+                    <td style="padding: 10px 0; color: #10b981; font-weight: bold; font-size: 13px; text-transform: uppercase;">${item.licenseType}</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid #27272a;">
+                    <td style="padding: 10px 0; color: #a1a1aa; font-weight: bold; font-size: 13px;">MONTO:</td>
+                    <td style="padding: 10px 0; color: #ffffff; font-weight: bold; font-size: 13px;">$${Number(item.price).toFixed(2)} USD</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid #27272a;">
+                    <td style="padding: 10px 0; color: #a1a1aa; font-weight: bold; font-size: 13px;">MÉTODO DE PAGO:</td>
+                    <td style="padding: 10px 0; color: #ffffff; text-transform: uppercase; font-size: 13px;">${paymentMethod}</td>
+                  </tr>
+                </table>
+                
+                <div style="text-align: center; margin-top: 30px;">
+                  <a href="${approveLink}" style="display: inline-block; background-color: #10b981; color: #ffffff; padding: 12px 30px; font-weight: bold; text-decoration: none; border-radius: 5px; font-size: 13px; text-transform: uppercase; margin-right: 15px; letter-spacing: 0.5px;">APROBAR PEDIDO</a>
+                  <a href="${rejectLink}" style="display: inline-block; background-color: #ef4444; color: #ffffff; padding: 12px 30px; font-weight: bold; text-decoration: none; border-radius: 5px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">RECHAZAR PEDIDO</a>
+                </div>
+              </div>
+            `;
+            
+            MailApp.sendEmail({
+              to: adminEmail,
+              subject: subject,
+              htmlBody: htmlBody
+            });
+          }
+        } catch (mailErr) {
+          Logger.log("Error sending email notification: " + mailErr.toString());
+        }
       }
       return jsonResponse({ status: "success", message: "Pedido registrado con éxito como PENDIENTE" });
     }
