@@ -1801,7 +1801,7 @@ export default function AdminPage() {
                   <div className="space-y-1.5">
                     <label className="font-mono text-[9px] tracking-wider text-foreground/50 uppercase font-bold">Archivo de Audio</label>
                     <div className="relative group flex flex-col items-center justify-center border border-dashed border-white/10 hover:border-primary/50 bg-zinc-900/30 rounded-lg p-6 transition-colors text-center cursor-pointer min-h-[140px]">
-                      <input type="file" accept="audio/*" onChange={(e) => setAudioFile(e.target.files?.[0] || null)} className="absolute inset-0 size-full opacity-0 cursor-pointer" required />
+                      <input type="file" accept="audio/*,.zip,.rar" onChange={(e) => setAudioFile(e.target.files?.[0] || null)} className="absolute inset-0 size-full opacity-0 cursor-pointer" required />
                       {audioFile ? (
                         <div className="space-y-2">
                           <Music className="size-8 text-primary mx-auto" />
