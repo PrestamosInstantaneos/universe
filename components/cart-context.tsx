@@ -765,7 +765,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             price: item.price
           }))
           
-          await fetch(appsScriptUrl, {
+          const response = await fetch(appsScriptUrl, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify({
@@ -775,9 +775,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               items: itemsPayload
             })
           })
+          const result = await response.json()
+          console.log("📨 [confirmPurchase] Google Sheets Response:", result)
+          if (result.status === "success") {
+            console.log("✅ Pedido registrado exitosamente en Sheets.")
+          } else {
+            console.error("❌ Error devuelto por Sheets:", result.message)
+          }
         }
       } catch (err) {
-        console.error("Error creating order in sheets:", err)
+        console.error("❌ Error creating order in sheets:", err)
       }
     }
 
