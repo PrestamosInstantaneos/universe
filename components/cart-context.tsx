@@ -779,6 +779,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           console.log("📨 [confirmPurchase] Google Sheets Response:", result)
           if (result.status === "success") {
             console.log("✅ Pedido registrado exitosamente en Sheets.")
+            console.log("📬 [Notificación de Email] Destinatario:", result.emailRecipient)
+            if (result.emailSent) {
+              console.log("🟢 [Notificación de Email] Enviado con éxito.")
+            } else {
+              console.warn("⚠️ [Notificación de Email] No enviado. Motivo:", result.emailError)
+            }
           } else {
             console.error("❌ Error devuelto por Sheets:", result.message)
           }
