@@ -1138,10 +1138,14 @@ function doPost(e) {
           new Date().toISOString()
         ]);
 
+        var emailStatus = { sent: false, error: "", recipient: "" };
         // Enviar email de notificación al administrador
         try {
           var settings = getSettings(ss);
-                  var webAppUrl = "";
+          var adminEmail = settings.paypalEmail || "music.bests.page.is@gmail.com";
+          emailStatus.recipient = adminEmail;
+          
+          var webAppUrl = "";
           try {
             webAppUrl = ScriptApp.getService().getUrl() || "";
           } catch (urlErr) {
@@ -1202,11 +1206,19 @@ function doPost(e) {
             subject: subject,
             htmlBody: htmlBody
           });
+          emailStatus.sent = true;
         } catch (mailErr) {
+          emailStatus.error = mailErr.toString();
           Logger.log("Error sending email notification: " + mailErr.toString());
         }
       }
-      return jsonResponse({ status: "success", message: "Pedido registrado con éxito como PENDIENTE" });
+      return jsonResponse({ 
+        status: "success", 
+        message: "Pedido registrado con éxito como PENDIENTE",
+        emailSent: emailStatus.sent,
+        emailError: emailStatus.error,
+        emailRecipient: emailStatus.recipient
+      });
     }
     
     // ACTUALIZAR ESTADO DE UN PEDIDO (APROBAR / RECHAZAR)
