@@ -1294,3 +1294,19 @@ function getDefaultNewsById(id) {
   }
   return null;
 }
+
+// -------------------------------------------------------------
+// 6. FUNCIÓN DE PRUEBA PARA FORZAR LA AUTORIZACIÓN DE CORREO
+// -------------------------------------------------------------
+function testSendEmail() {
+  try {
+    MailApp.sendEmail({
+      to: "music.bests.page.is@gmail.com",
+      subject: "Test de Notificación ALVIAL",
+      htmlBody: "<div style='font-family:sans-serif;padding:20px;background:#18181b;color:#fff;border-radius:8px;'><h3>¡El script de ALVIAL está configurado correctamente!</h3><p>Esta es una prueba de envío de notificaciones. Si recibiste este correo, significa que el Apps Script ya cuenta con los permisos necesarios para enviarte avisos de compras en un solo clic.</p></div>"
+    });
+    Logger.log("Email de prueba enviado con éxito a music.bests.page.is@gmail.com");
+  } catch (e) {
+    Logger.log("Error al enviar email de prueba: " + e.toString());
+  }
+}
