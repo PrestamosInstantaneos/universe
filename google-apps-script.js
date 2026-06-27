@@ -48,6 +48,9 @@ function doGet(e) {
         }
         if (foundRow !== -1) {
           ordersSheet.getRange(foundRow, 8).setValue(status);
+          if (status === "APROBADO") {
+            sendBuyerApprovalEmail(ss, values[foundRow - 1]);
+          }
           
           var htmlContent = '<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ALVIAL - Pedido Actualizado</title><style>body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #09090b; color: #fafafa; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; } .card { background: #18181b; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 32px; text-align: center; max-width: 400px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5); } .icon { width: 64px; height: 64px; border-radius: 50%; background: ' + (status === "APROBADO" ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)") + '; color: ' + (status === "APROBADO" ? "#10b981" : "#ef4444") + '; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 24px; } h1 { font-size: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 12px; } p { font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.6; margin: 0 0 24px; } .btn { display: inline-block; background: ' + (status === "APROBADO" ? "#10b981" : "#ef4444") + '; color: #fff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }</style></head><body><div class="card"><div class="icon">' + (status === "APROBADO" ? "✓" : "✕") + '</div><h1>Pedido ' + (status === "APROBADO" ? "Aprobado" : "Rechazado") + '</h1><p>El pedido <strong>' + id + '</strong> ha sido actualizado a <strong>' + status + '</strong> en la base de datos de Google Sheets. El cliente ya tiene las descargas habilitadas en la plataforma de manera inmediata.</p><a href="#" class="btn" onclick="window.close()">Cerrar Ventana</a></div></body></html>';
           return HtmlService.createHtmlOutput(htmlContent);
@@ -193,7 +196,11 @@ function doGet(e) {
         logoText: "ALVIAL",
         paypalEmail: "",
         binanceId: "",
-        zinliPhone: ""
+        zinliPhone: "",
+        instagramUrl: "",
+        youtubeUrl: "",
+        soundcloudUrl: "",
+        telegramUrl: ""
       };
       var settingsSheet = ss.getSheetByName("Ajustes");
       if (!settingsSheet) {
@@ -204,11 +211,15 @@ function doGet(e) {
         settingsSheet.appendRow(["paypalEmail", ""]);
         settingsSheet.appendRow(["binanceId", ""]);
         settingsSheet.appendRow(["zinliPhone", ""]);
+        settingsSheet.appendRow(["instagramUrl", ""]);
+        settingsSheet.appendRow(["youtubeUrl", ""]);
+        settingsSheet.appendRow(["soundcloudUrl", ""]);
+        settingsSheet.appendRow(["telegramUrl", ""]);
       } else {
         var setValues = settingsSheet.getDataRange().getValues();
         for (var s = 1; s < setValues.length; s++) {
-          var key = String(setValues[s][0]);
-          var val = String(setValues[s][1] || "");
+          var key = String(setValues[s][0]).trim();
+          var val = String(setValues[s][1] || "").trim();
           settings[key] = val;
         }
       }
@@ -974,6 +985,18 @@ function doPost(e) {
       if (data.zinliPhone !== undefined) {
         settingsToSave["zinliPhone"] = data.zinliPhone;
       }
+      if (data.instagramUrl !== undefined) {
+        settingsToSave["instagramUrl"] = data.instagramUrl;
+      }
+      if (data.youtubeUrl !== undefined) {
+        settingsToSave["youtubeUrl"] = data.youtubeUrl;
+      }
+      if (data.soundcloudUrl !== undefined) {
+        settingsToSave["soundcloudUrl"] = data.soundcloudUrl;
+      }
+      if (data.telegramUrl !== undefined) {
+        settingsToSave["telegramUrl"] = data.telegramUrl;
+      }
       
       var range = settingsSheet.getDataRange();
       var values = range.getValues();
@@ -1005,7 +1028,11 @@ function doPost(e) {
         logoUrl: logoUrl,
         paypalEmail: settingsToSave.paypalEmail,
         binanceId: settingsToSave.binanceId,
-        zinliPhone: settingsToSave.zinliPhone
+        zinliPhone: settingsToSave.zinliPhone,
+        instagramUrl: settingsToSave.instagramUrl,
+        youtubeUrl: settingsToSave.youtubeUrl,
+        soundcloudUrl: settingsToSave.soundcloudUrl,
+        telegramUrl: settingsToSave.telegramUrl
       });
     }
     
@@ -1238,6 +1265,9 @@ function doPost(e) {
       
       if (foundRow !== -1) {
         ordersSheet.getRange(foundRow, 8).setValue(newStatus); // Columna H is Status
+        if (newStatus === "APROBADO") {
+          sendBuyerApprovalEmail(ss, values[foundRow - 1]);
+        }
         return jsonResponse({ status: "success", message: "Estado de pedido actualizado a " + newStatus });
       }
       return jsonResponse({ status: "error", message: "Pedido no encontrado" });
@@ -1341,7 +1371,11 @@ function getSettings(ss) {
     paypalEmail: "music.bests.page.is@gmail.com",
     binanceId: "",
     zinliPhone: "",
-    logoUrl: ""
+    logoUrl: "",
+    instagramUrl: "",
+    youtubeUrl: "",
+    soundcloudUrl: "",
+    telegramUrl: ""
   };
   var settingsSheet = ss.getSheetByName("Ajustes");
   if (settingsSheet) {
@@ -1353,4 +1387,79 @@ function getSettings(ss) {
     }
   }
   return settings;
+}
+
+// -------------------------------------------------------------
+// 7. ENVÍO DE CONFIRMACIÓN Y LINK DE DESCARGA AL COMPRADOR
+// -------------------------------------------------------------
+function sendBuyerApprovalEmail(ss, orderRow) {
+  try {
+    var buyerEmail = String(orderRow[1] || "").trim();
+    if (!buyerEmail) return;
+    
+    var trackId = String(orderRow[2] || "").trim();
+    var beatTitle = String(orderRow[3] || "").trim();
+    var licenseType = String(orderRow[4] || "").trim();
+    var orderId = String(orderRow[0] || "").trim();
+    
+    // Buscar el beat en la hoja de Beats para obtener la url de descarga real
+    var beatsSheet = ss.getSheetByName("Beats") || ss.getSheetByName("beats");
+    var downloadUrl = "";
+    if (beatsSheet) {
+      var beatsValues = beatsSheet.getDataRange().getValues();
+      for (var i = 1; i < beatsValues.length; i++) {
+        if (String(beatsValues[i][0]) === trackId) {
+          downloadUrl = String(beatsValues[i][7] || "").trim(); // Columna H (AudioUrl)
+          break;
+        }
+      }
+    }
+    
+    // Si no se encuentra, usar una por defecto o la url del sitio
+    if (!downloadUrl) {
+      downloadUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"; // fallback
+    }
+    
+    var subject = "✅ ¡Tu beat \"" + beatTitle + "\" está listo para descargar! - ALVIAL";
+    var htmlBody = '<div style="font-family: Arial, sans-serif; background-color: #09090b; color: #fafafa; padding: 30px; max-width: 600px; border-radius: 10px; margin: 0 auto; border: 1px solid #27272a; text-align: left;">' +
+      '<div style="text-align: center; margin-bottom: 20px;">' +
+        '<span style="font-size: 32px;">🎵</span>' +
+        '<h2 style="color: #10b981; text-transform: uppercase; letter-spacing: 1px; margin-top: 10px; font-size: 18px;">¡PAGO VERIFICADO Y APROBADO!</h2>' +
+      '</div>' +
+      '<p style="color: #e4e4e7; font-size: 13px; line-height: 1.6;">' +
+        'Hola,<br/><br/>' +
+        'Tu pago para el pedido <strong>' + orderId + '</strong> ha sido verificado y aprobado con éxito por el compositor <strong>ALVIAL</strong>.' +
+      '</p>' +
+      '<div style="background-color: #18181b; border: 1px solid #27272a; border-radius: 8px; padding: 20px; margin: 20px 0;">' +
+        '<h3 style="color: #ffffff; font-size: 14px; margin-top: 0; margin-bottom: 15px; border-bottom: 1px solid #27272a; padding-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Detalles de tu compra:</h3>' +
+        '<table style="width: 100%; font-size: 13px; color: #a1a1aa; border-collapse: collapse;">' +
+          '<tr>' +
+            '<td style="padding: 4px 0; font-weight: bold;">Beat:</td>' +
+            '<td style="color: #ffffff; text-align: right;">' + beatTitle + '</td>' +
+          '</tr>' +
+          '<tr>' +
+            '<td style="padding: 4px 0; font-weight: bold;">Licencia:</td>' +
+            '<td style="color: #10b981; text-align: right; text-transform: uppercase;">' + licenseType + '</td>' +
+          '</tr>' +
+        '</table>' +
+      '</div>' +
+      '<div style="text-align: center; margin: 30px 0 20px;">' +
+        '<a href="' + downloadUrl + '" style="display: inline-block; background-color: #10b981; color: #ffffff; padding: 12px 30px; font-weight: bold; text-decoration: none; border-radius: 5px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">DESCARGAR BEAT (.MP3/.ZIP)</a>' +
+      '</div>' +
+      '<p style="color: #71717a; font-size: 11px; text-align: center; line-height: 1.5; margin-top: 30px;">' +
+        'También puedes acceder a tu cuenta en nuestro sitio web en cualquier momento y descargar tus archivos desde la sección "MIS DESCARGAS".<br/>' +
+        'Gracias por tu compra. ¡Disfruta el beat!<br/><br/>' +
+        '<strong>ALVIAL Producciones</strong>' +
+      '</p>' +
+    '</div>';
+    
+    MailApp.sendEmail({
+      to: buyerEmail,
+      subject: subject,
+      htmlBody: htmlBody
+    });
+    Logger.log("Email de confirmación y descarga enviado al comprador: " + buyerEmail);
+  } catch (err) {
+    Logger.log("Error sending buyer approval email: " + err.toString());
+  }
 }

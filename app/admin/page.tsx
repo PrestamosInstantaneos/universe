@@ -48,7 +48,28 @@ type AdminStats = {
 
 export default function AdminPage() {
   const [mounted, setMounted] = useState(false)
-  const { user, logoutUser, refreshCatalog, allTracks, allNews, licenses, logoUrl, paypalEmail, binanceId, zinliPhone, deleteBeat, genres, updateGenres, orders, approveOrder, rejectOrder } = useCart()
+  const { 
+    user, 
+    logoutUser, 
+    refreshCatalog, 
+    allTracks, 
+    allNews, 
+    licenses, 
+    logoUrl, 
+    paypalEmail, 
+    binanceId, 
+    zinliPhone, 
+    instagramUrl,
+    youtubeUrl,
+    soundcloudUrl,
+    telegramUrl,
+    deleteBeat, 
+    genres, 
+    updateGenres, 
+    orders, 
+    approveOrder, 
+    rejectOrder 
+  } = useCart()
 
   // Tab State: stats | upload | catalog | news | settings
   const [activeTab, setActiveTab] = useState<"stats" | "upload" | "catalog" | "news" | "settings" | "orders">("stats")
@@ -59,16 +80,24 @@ export default function AdminPage() {
   const [selectedLicenseType, setSelectedLicenseType] = useState<string>("basic")
   const [newConditionText, setNewConditionText] = useState<string>("")
 
-  // Payment settings state
+  // Payment & Social settings state
   const [localPaypalEmail, setLocalPaypalEmail] = useState("")
   const [localBinanceId, setLocalBinanceId] = useState("")
   const [localZinliPhone, setLocalZinliPhone] = useState("")
+  const [localInstagram, setLocalInstagram] = useState("")
+  const [localYoutube, setLocalYoutube] = useState("")
+  const [localSoundcloud, setLocalSoundcloud] = useState("")
+  const [localTelegram, setLocalTelegram] = useState("")
 
   useEffect(() => {
     if (paypalEmail) setLocalPaypalEmail(paypalEmail)
     if (binanceId) setLocalBinanceId(binanceId)
     if (zinliPhone) setLocalZinliPhone(zinliPhone)
-  }, [paypalEmail, binanceId, zinliPhone])
+    if (instagramUrl) setLocalInstagram(instagramUrl)
+    if (youtubeUrl) setLocalYoutube(youtubeUrl)
+    if (soundcloudUrl) setLocalSoundcloud(soundcloudUrl)
+    if (telegramUrl) setLocalTelegram(telegramUrl)
+  }, [paypalEmail, binanceId, zinliPhone, instagramUrl, youtubeUrl, soundcloudUrl, telegramUrl])
 
   useEffect(() => {
     if (licenses) {
@@ -534,7 +563,11 @@ export default function AdminPage() {
           existingLogo: logoUrl,
           paypalEmail: localPaypalEmail,
           binanceId: localBinanceId,
-          zinliPhone: localZinliPhone
+          zinliPhone: localZinliPhone,
+          instagramUrl: localInstagram,
+          youtubeUrl: localYoutube,
+          soundcloudUrl: localSoundcloud,
+          telegramUrl: localTelegram
         })
       })
 
@@ -801,6 +834,55 @@ export default function AdminPage() {
                       value={localZinliPhone}
                       onChange={(e) => setLocalZinliPhone(e.target.value)}
                       placeholder="Ej. +584123456789 o correo@zinli.com"
+                      className="w-full bg-zinc-900/50 border border-white/10 hover:border-white/20 focus:border-primary text-foreground font-mono text-xs p-2.5 rounded outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Redes Sociales y Soporte */}
+                <div className="border-t border-white/5 pt-4 space-y-4 text-left">
+                  <h5 className="font-heading text-[10px] font-bold text-primary uppercase tracking-wider">Redes Sociales y Soporte</h5>
+                  
+                  <div className="space-y-1.5">
+                    <label className="font-mono text-[8px] text-foreground/50 uppercase font-bold block">Enlace de Instagram</label>
+                    <input
+                      type="url"
+                      value={localInstagram}
+                      onChange={(e) => setLocalInstagram(e.target.value)}
+                      placeholder="Ej. https://instagram.com/alvial"
+                      className="w-full bg-zinc-900/50 border border-white/10 hover:border-white/20 focus:border-primary text-foreground font-mono text-xs p-2.5 rounded outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-mono text-[8px] text-foreground/50 uppercase font-bold block">Enlace de YouTube</label>
+                    <input
+                      type="url"
+                      value={localYoutube}
+                      onChange={(e) => setLocalYoutube(e.target.value)}
+                      placeholder="Ej. https://youtube.com/@alvial"
+                      className="w-full bg-zinc-900/50 border border-white/10 hover:border-white/20 focus:border-primary text-foreground font-mono text-xs p-2.5 rounded outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-mono text-[8px] text-foreground/50 uppercase font-bold block">Enlace de SoundCloud</label>
+                    <input
+                      type="url"
+                      value={localSoundcloud}
+                      onChange={(e) => setLocalSoundcloud(e.target.value)}
+                      placeholder="Ej. https://soundcloud.com/alvial"
+                      className="w-full bg-zinc-900/50 border border-white/10 hover:border-white/20 focus:border-primary text-foreground font-mono text-xs p-2.5 rounded outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-mono text-[8px] text-foreground/50 uppercase font-bold block">Enlace de Telegram (Contacto / Soporte)</label>
+                    <input
+                      type="url"
+                      value={localTelegram}
+                      onChange={(e) => setLocalTelegram(e.target.value)}
+                      placeholder="Ej. https://t.me/alvial"
                       className="w-full bg-zinc-900/50 border border-white/10 hover:border-white/20 focus:border-primary text-foreground font-mono text-xs p-2.5 rounded outline-none"
                     />
                   </div>

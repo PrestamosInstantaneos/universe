@@ -339,6 +339,10 @@ type CartContextType = {
   paypalEmail: string
   binanceId: string
   zinliPhone: string
+  instagramUrl: string
+  youtubeUrl: string
+  soundcloudUrl: string
+  telegramUrl: string
   genres: GenreItem[]
   updateGenres: (updatedList: any[]) => Promise<{ success: boolean; message?: string }>
   orders: any[]
@@ -411,6 +415,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [paypalEmail, setPaypalEmail] = useState<string>("")
   const [binanceId, setBinanceId] = useState<string>("")
   const [zinliPhone, setZinliPhone] = useState<string>("")
+  const [instagramUrl, setInstagramUrl] = useState<string>("")
+  const [youtubeUrl, setYoutubeUrl] = useState<string>("")
+  const [soundcloudUrl, setSoundcloudUrl] = useState<string>("")
+  const [telegramUrl, setTelegramUrl] = useState<string>("")
   const [genres, setGenres] = useState<GenreItem[]>([
     { id: "1", name: "Hip Hop", tag: "TRAP", img: "/images/genre_hiphop.png" },
     { id: "2", name: "Pop", tag: "NEÓN", img: "/images/genre_pop.png" },
@@ -471,6 +479,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           if (typeof result.settings.paypalEmail === "string") setPaypalEmail(result.settings.paypalEmail)
           if (typeof result.settings.binanceId === "string") setBinanceId(result.settings.binanceId)
           if (typeof result.settings.zinliPhone === "string") setZinliPhone(result.settings.zinliPhone)
+          if (typeof result.settings.instagramUrl === "string") setInstagramUrl(result.settings.instagramUrl)
+          if (typeof result.settings.youtubeUrl === "string") setYoutubeUrl(result.settings.youtubeUrl)
+          if (typeof result.settings.soundcloudUrl === "string") setSoundcloudUrl(result.settings.soundcloudUrl)
+          if (typeof result.settings.telegramUrl === "string") setTelegramUrl(result.settings.telegramUrl)
         }
 
         if (Array.isArray(result.genres)) {
@@ -1006,6 +1018,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       paypalEmail,
       binanceId,
       zinliPhone,
+      instagramUrl,
+      youtubeUrl,
+      soundcloudUrl,
+      telegramUrl,
       genres,
       updateGenres,
       orders,
