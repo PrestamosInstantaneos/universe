@@ -48,10 +48,10 @@ type AdminStats = {
 
 export default function AdminPage() {
   const [mounted, setMounted] = useState(false)
-  const { user, logoutUser, refreshCatalog, allTracks, allNews, licenses, logoUrl, paypalEmail, binanceId, zinliPhone, deleteBeat, genres, updateGenres } = useCart()
+  const { user, logoutUser, refreshCatalog, allTracks, allNews, licenses, logoUrl, paypalEmail, binanceId, zinliPhone, deleteBeat, genres, updateGenres, orders, approveOrder, rejectOrder } = useCart()
 
   // Tab State: stats | upload | catalog | news | settings
-  const [activeTab, setActiveTab] = useState<"stats" | "upload" | "catalog" | "news" | "settings">("stats")
+  const [activeTab, setActiveTab] = useState<"stats" | "upload" | "catalog" | "news" | "settings" | "orders">("stats")
 
   // Logotipo y Licencias
   const [logoFile, setLogoFile] = useState<File | null>(null)
@@ -1105,6 +1105,147 @@ export default function AdminPage() {
     )
   }
 
+  // Render Pestaña Pedidos
+  const renderOrdersTab = () => {
+    const sortedOrders = [...orders].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+    const handleApprove = async (id: string) => {
+      setStatus("loading")
+      setStatusMessage("Aprobando pedido en la base de datos...")
+      try {
+        const result = await approveOrder(id)
+        if (result.success) {
+          setStatus("success")
+          setStatusMessage("¡Pedido aprobado y descargas liberadas correctamente!")
+        } else {
+          throw new Error(result.message)
+        }
+      } catch (err: any) {
+        console.error(err)
+        setStatus("error")
+        setStatusMessage(err.message || "Error al aprobar pedido.")
+      }
+    }
+
+    const handleReject = async (id: string) => {
+      if (!confirm("¿Seguro que deseas rechazar este pedido? Las descargas no se liberarán.")) return
+      setStatus("loading")
+      setStatusMessage("Rechazando pedido...")
+      try {
+        const result = await rejectOrder(id)
+        if (result.success) {
+          setStatus("success")
+          setStatusMessage("El pedido ha sido rechazado.")
+        } else {
+          throw new Error(result.message)
+        }
+      } catch (err: any) {
+        console.error(err)
+        setStatus("error")
+        setStatusMessage(err.message || "Error al rechazar pedido.")
+      }
+    }
+
+    return (
+      <div className="space-y-6 text-left">
+        <div className="border-b border-white/5 pb-3">
+          <h3 className="font-heading text-lg font-bold text-foreground uppercase">Gestión de Pedidos y Compras</h3>
+          <p className="font-mono text-[9px] text-foreground/45 uppercase mt-1">Verifica las transferencias de PayPal, Binance Pay y Zinli, y libera las descargas de los usuarios</p>
+        </div>
+
+        <div className="bg-zinc-950/45 border border-white/5 rounded-lg p-5">
+          <div className="overflow-x-auto">
+            <table className="w-full font-mono text-[10px] text-left">
+              <thead>
+                <tr className="border-b border-white/5 text-foreground/40 font-bold uppercase">
+                  <th className="pb-3">ID Pedido</th>
+                  <th className="pb-3">Cliente (Email)</th>
+                  <th className="pb-3">Beat / Licencia</th>
+                  <th className="pb-3 text-right">Monto</th>
+                  <th className="pb-3 text-center">Método</th>
+                  <th className="pb-3 text-center">Fecha</th>
+                  <th className="pb-3 text-center">Estado</th>
+                  <th className="pb-3 text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {sortedOrders.length > 0 ? (
+                  sortedOrders.map((ord) => {
+                    const isPending = ord.status === "PENDIENTE"
+                    const isApproved = ord.status === "APROBADO"
+                    
+                    return (
+                      <tr key={ord.id} className="hover:bg-white/5 transition-colors">
+                        <td className="py-3.5 font-bold text-primary">{ord.id}</td>
+                        <td className="py-3.5 text-foreground/80 truncate max-w-[150px]">{ord.email}</td>
+                        <td className="py-3.5">
+                          <span className="text-foreground font-bold block uppercase truncate max-w-[160px]">{ord.title}</span>
+                          <span className="text-[7.5px] text-foreground/40 uppercase block font-bold tracking-wider mt-0.5">{ord.licenseType}</span>
+                        </td>
+                        <td className="py-3.5 text-right font-bold text-emerald-400 font-mono">${Number(ord.price).toFixed(2)}</td>
+                        <td className="py-3.5 text-center">
+                          <span className="px-2 py-0.5 rounded text-[8px] font-bold border uppercase bg-zinc-900/60 border-white/5 text-foreground/70">
+                            {ord.paymentMethod}
+                          </span>
+                        </td>
+                        <td className="py-3.5 text-center text-foreground/40">{formatDate(ord.date)}</td>
+                        <td className="py-3.5 text-center">
+                          {isPending && (
+                            <span className="bg-amber-500/10 text-amber-500 text-[8px] font-bold px-2 py-0.5 rounded border border-amber-500/20">
+                              PENDIENTE
+                            </span>
+                          )}
+                          {isApproved && (
+                            <span className="bg-emerald-500/10 text-emerald-400 text-[8px] font-bold px-2 py-0.5 rounded border border-emerald-500/20">
+                              APROBADO
+                            </span>
+                          )}
+                          {!isPending && !isApproved && (
+                            <span className="bg-red-500/10 text-red-400 text-[8px] font-bold px-2 py-0.5 rounded border border-red-500/20">
+                              RECHAZADO
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3.5 text-right">
+                          {isPending ? (
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => handleApprove(ord.id)}
+                                className="bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-bold uppercase tracking-wider text-[8px] px-2.5 py-1 rounded cursor-pointer transition-colors"
+                              >
+                                Aprobar
+                              </button>
+                              <button
+                                onClick={() => handleReject(ord.id)}
+                                className="bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/20 text-red-400 font-bold uppercase tracking-wider text-[8px] px-2.5 py-1 rounded cursor-pointer transition-all"
+                              >
+                                Rechazar
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-[8px] text-foreground/30 uppercase font-mono italic">
+                              {isApproved ? "Procesado" : "Rechazado"}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={8} className="py-8 text-center text-foreground/30 uppercase font-mono">
+                      No hay pedidos registrados en la base de datos.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // Render Pestaña Biblioteca de Beats
   const renderCatalogTab = () => {
     return (
@@ -1313,6 +1454,17 @@ export default function AdminPage() {
           >
             <Megaphone className="size-3.5" />
             NOTICIAS ({localNews.length})
+          </button>
+          <button
+            onClick={() => { setActiveTab("orders"); setStatus("idle"); }}
+            className={`flex items-center gap-2 font-mono text-[10px] tracking-widest font-bold px-5 py-3.5 border-b-2 transition-all cursor-pointer shrink-0 ${
+              activeTab === "orders"
+                ? "border-primary text-primary bg-primary/5"
+                : "border-transparent text-foreground/60 hover:text-foreground hover:bg-white/5"
+            }`}
+          >
+            <ShoppingBag className="size-3.5" />
+            PEDIDOS ({orders.filter((o: any) => o.status === "PENDIENTE").length})
           </button>
           <button
             onClick={() => { setActiveTab("settings"); setStatus("idle"); }}
@@ -1677,6 +1829,7 @@ export default function AdminPage() {
           {activeTab === "catalog" && renderCatalogTab()}
           {activeTab === "news" && renderNewsTab()}
           {activeTab === "settings" && renderSettingsTab()}
+          {activeTab === "orders" && renderOrdersTab()}
         </div>
 
         {/* MODAL DE EDICIÓN DE BEATS */}

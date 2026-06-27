@@ -221,7 +221,41 @@ function doGet(e) {
         }
       }
       
-      return jsonResponse({ status: "success", tracks: tracks, licenses: licenses, settings: settings, genres: genres });
+      // Cargar pedidos para el usuario o administrador
+      var orders = [];
+      var ordersSheet = ss.getSheetByName("Pedidos");
+      if (!ordersSheet) {
+        ordersSheet = ss.insertSheet("Pedidos");
+        ordersSheet.appendRow(["ID", "Email", "TrackId", "Title", "LicenseType", "Price", "PaymentMethod", "Status", "Date"]);
+      }
+      
+      var emailVal = e.parameter.email;
+      if (emailVal) {
+        var oValues = ordersSheet.getDataRange().getValues();
+        var isAdmin = (emailVal === settings.paypalEmail || emailVal === "music.bests.page.is@gmail.com" || emailVal === "cienciaytecnologia.alvial@gmail.com");
+        
+        for (var o = 1; o < oValues.length; o++) {
+          var oEmail = String(oValues[o][1]);
+          var oStatus = String(oValues[o][7]);
+          
+          // El admin ve todos los pedidos, el cliente ve solo los suyos
+          if (isAdmin || oEmail === emailVal) {
+            orders.push({
+              id: String(oValues[o][0]),
+              email: oEmail,
+              trackId: String(oValues[o][2]),
+              title: String(oValues[o][3]),
+              licenseType: String(oValues[o][4]),
+              price: Number(oValues[o][5]) || 0,
+              paymentMethod: String(oValues[o][6]),
+              status: oStatus,
+              date: String(oValues[o][8])
+            });
+          }
+        }
+      }
+      
+      return jsonResponse({ status: "success", tracks: tracks, licenses: licenses, settings: settings, genres: genres, orders: orders });
     }
     
     // ACCIÓN: OBTENER NOTICIAS
@@ -1046,6 +1080,58 @@ function doPost(e) {
         }
       }
       return jsonResponse({ status: "error", message: "Beat no encontrado en la hoja" });
+    }
+    
+    // CREAR NUEVO PEDIDO (PENDIENTE DE APROBACIÓN)
+    if (action === "createOrder") {
+      var ordersSheet = ss.getSheetByName("Pedidos") || ss.insertSheet("Pedidos");
+      var numRows = ordersSheet.getLastRow();
+      if (numRows === 0) {
+        ordersSheet.appendRow(["ID", "Email", "TrackId", "Title", "LicenseType", "Price", "PaymentMethod", "Status", "Date"]);
+      }
+      
+      var email = data.email || "";
+      var paymentMethod = data.paymentMethod || "";
+      var items = data.items || [];
+      
+      for (var j = 0; j < items.length; j++) {
+        var item = items[j];
+        var orderId = "ALV-" + Math.floor(100000 + Math.random() * 900000);
+        ordersSheet.appendRow([
+          orderId,
+          email,
+          String(item.trackId),
+          String(item.title),
+          String(item.licenseType),
+          Number(item.price) || 0,
+          paymentMethod,
+          "PENDIENTE",
+          new Date().toISOString()
+        ]);
+      }
+      return jsonResponse({ status: "success", message: "Pedido registrado con éxito como PENDIENTE" });
+    }
+    
+    // ACTUALIZAR ESTADO DE UN PEDIDO (APROBAR / RECHAZAR)
+    if (action === "updateOrderStatus") {
+      var ordersSheet = ss.getSheetByName("Pedidos") || ss.insertSheet("Pedidos");
+      var values = ordersSheet.getDataRange().getValues();
+      var orderId = data.id;
+      var newStatus = data.status; // APROBADO or RECHAZADO
+      var foundRow = -1;
+      
+      for (var i = 1; i < values.length; i++) {
+        if (String(values[i][0]) === String(orderId)) {
+          foundRow = i + 1;
+          break;
+        }
+      }
+      
+      if (foundRow !== -1) {
+        ordersSheet.getRange(foundRow, 8).setValue(newStatus); // Columna H is Status
+        return jsonResponse({ status: "success", message: "Estado de pedido actualizado a " + newStatus });
+      }
+      return jsonResponse({ status: "error", message: "Pedido no encontrado" });
     }
     
     return jsonResponse({ status: "error", message: "Acción POST no reconocida" });

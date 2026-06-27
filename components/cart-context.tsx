@@ -341,6 +341,9 @@ type CartContextType = {
   zinliPhone: string
   genres: GenreItem[]
   updateGenres: (updatedList: any[]) => Promise<{ success: boolean; message?: string }>
+  orders: any[]
+  approveOrder: (id: string) => Promise<{ success: boolean; message?: string }>
+  rejectOrder: (id: string) => Promise<{ success: boolean; message?: string }>
   // News
   news: NewsPost[]
   allNews: NewsPost[]
@@ -369,7 +372,7 @@ type CartContextType = {
   startCheckout: () => void
   closeCheckout: () => void
   setPaypalState: (state: 'login' | 'review' | 'processing' | 'success') => void
-  confirmPurchase: () => void
+  confirmPurchase: (paymentMethod: string) => Promise<void>
   closeDownloads: () => void
   openDownloads: () => void
   deleteBeat: (id: string) => Promise<{ success: boolean; message?: string }>
@@ -417,6 +420,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     { id: "6", name: "Reggae", tag: "REGGAETÓN", img: "/images/genre_reggae.png" },
     { id: "7", name: "Afrobeats", tag: "AFROBEATS", img: "/images/genre_afrobeats.png" }
   ])
+  const [orders, setOrders] = useState<any[]>([])
 
   const refreshCatalog = async () => {
     try {
@@ -426,8 +430,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
+      let combined: Track[] = []
       // 1. Obtener Beats
-      const response = await fetch(`${appsScriptUrl}?action=getTracks`)
+      const emailParam = user ? `&email=${encodeURIComponent(user.email)}` : ""
+      const response = await fetch(`${appsScriptUrl}?action=getTracks${emailParam}`)
       const result = await response.json()
       if (result.status === "success") {
         if (Array.isArray(result.tracks)) {
@@ -450,7 +456,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             })
           })
           
-          const combined = Array.from(trackMap.values()).filter(t => !t.eliminado)
+          combined = Array.from(trackMap.values()).filter(t => !t.eliminado)
           setAllTracks(combined)
           setTracks(combined.filter(t => t.expuesto !== false && t.tendencia !== false))
           setReleases(combined.filter(t => t.expuesto !== false && t.dropeado === true))
@@ -469,6 +475,31 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
         if (Array.isArray(result.genres)) {
           setGenres(result.genres)
+        }
+
+        if (Array.isArray(result.orders)) {
+          setOrders(result.orders)
+          
+          const approved = result.orders.filter((o: any) => o.status === "APROBADO")
+          const currentTracksList = combined && combined.length > 0 ? combined : ALL_TRACKS
+          const mappedItems: CartItem[] = approved.map((o: any) => {
+            const track = currentTracksList.find(t => t.id === o.trackId) || ALL_TRACKS.find(t => t.id === o.trackId)
+            if (track) {
+              return {
+                cartId: o.id,
+                track,
+                licenseType: o.licenseType as LicenseType,
+                price: o.price,
+                selected: true
+              }
+            }
+            return null
+          }).filter(Boolean) as CartItem[]
+          
+          setPurchasedItems(mappedItems)
+          localStorage.setItem("frzn_purchased", JSON.stringify(mappedItems))
+        } else {
+          setOrders([])
         }
       }
 
@@ -496,6 +527,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }, 20000)
     return () => clearInterval(interval)
   }, [])
+
+  useEffect(() => {
+    refreshCatalog()
+  }, [user])
 
   // Cargar estado inicial desde localStorage si es posible
   useEffect(() => {
@@ -717,11 +752,39 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsPaypalOpen(false)
   }
 
-  const confirmPurchase = async () => {
+  const confirmPurchase = async (paymentMethod: string) => {
     // Tomar solo los ítems seleccionados
     const itemsToBuy = cart.filter(item => item.selected)
     const remainingItems = cart.filter(item => !item.selected)
     
+    // Si hay un usuario registrado, guardamos en la base de datos como PENDIENTE
+    if (user) {
+      try {
+        const appsScriptUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL
+        if (appsScriptUrl) {
+          const itemsPayload = itemsToBuy.map(item => ({
+            trackId: item.track.id,
+            title: item.track.title,
+            licenseType: item.licenseType,
+            price: item.price
+          }))
+          
+          await fetch(appsScriptUrl, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({
+              action: "createOrder",
+              email: user.email,
+              paymentMethod,
+              items: itemsPayload
+            })
+          })
+        }
+      } catch (err) {
+        console.error("Error creating order in sheets:", err)
+      }
+    }
+
     // Takedown de licencias EXCLUSIVAS
     const exclusiveItems = itemsToBuy.filter(item => item.licenseType === "exclusive")
     if (exclusiveItems.length > 0) {
@@ -744,19 +807,63 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    const newPurchased = [...itemsToBuy, ...purchasedItems]
-    setPurchasedItems(newPurchased)
-    localStorage.setItem("frzn_purchased", JSON.stringify(newPurchased))
-    
     // Limpiar del carrito los ítems comprados
     saveCartToStorage(remainingItems)
-    
     setIsPaypalOpen(false)
-    setIsDownloadsOpen(true)
 
-    // Refrescar catálogo para ocultar el beat vendido inmediatamente
-    if (exclusiveItems.length > 0) {
-      await refreshCatalog()
+    // Refrescar catálogo
+    await refreshCatalog()
+  }
+
+  const approveOrder = async (orderId: string): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const appsScriptUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL
+      if (!appsScriptUrl) return { success: false, message: "URL de Apps Script no configurada." }
+      
+      const response = await fetch(appsScriptUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "updateOrderStatus",
+          id: orderId,
+          status: "APROBADO"
+        })
+      })
+      const result = await response.json()
+      if (result.status === "success") {
+        await refreshCatalog()
+        return { success: true, message: result.message }
+      }
+      return { success: false, message: result.message || "Error al aprobar pedido." }
+    } catch (e: any) {
+      console.error(e)
+      return { success: false, message: e.message || "Error de red." }
+    }
+  }
+
+  const rejectOrder = async (orderId: string): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const appsScriptUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL
+      if (!appsScriptUrl) return { success: false, message: "URL de Apps Script no configurada." }
+      
+      const response = await fetch(appsScriptUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "updateOrderStatus",
+          id: orderId,
+          status: "RECHAZADO"
+        })
+      })
+      const result = await response.json()
+      if (result.status === "success") {
+        await refreshCatalog()
+        return { success: true, message: result.message }
+      }
+      return { success: false, message: result.message || "Error al rechazar pedido." }
+    } catch (e: any) {
+      console.error(e)
+      return { success: false, message: e.message || "Error de red." }
     }
   }
 
@@ -892,6 +999,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       zinliPhone,
       genres,
       updateGenres,
+      orders,
+      approveOrder,
+      rejectOrder,
       // News
       news,
       allNews,

@@ -23,6 +23,7 @@ export function PaypalModal() {
   const [copyFeedback, setCopyFeedback] = useState(false)
   const [localProcessing, setLocalProcessing] = useState(false)
   const [localSuccess, setLocalSuccess] = useState(false)
+  const [showPendingSuccess, setShowPendingSuccess] = useState(false)
 
   // Credenciales simuladas para PayPal
   const [email, setEmail] = useState("")
@@ -44,6 +45,7 @@ export function PaypalModal() {
       setSelectedMethod(null)
       setLocalProcessing(false)
       setLocalSuccess(false)
+      setShowPendingSuccess(false)
     }
   }, [isPaypalOpen])
 
@@ -67,9 +69,10 @@ export function PaypalModal() {
     setPaypalState("processing")
     setTimeout(() => {
       setPaypalState("success")
-      setTimeout(() => {
-        confirmPurchase()
+      setTimeout(async () => {
+        await confirmPurchase("paypal")
         setSelectedMethod(null)
+        setShowPendingSuccess(true)
       }, 1500)
     }, 2000)
   }
@@ -85,10 +88,11 @@ export function PaypalModal() {
     setTimeout(() => {
       setLocalProcessing(false)
       setLocalSuccess(true)
-      setTimeout(() => {
+      setTimeout(async () => {
         setLocalSuccess(false)
-        confirmPurchase()
+        await confirmPurchase(selectedMethod || "binance")
         setSelectedMethod(null)
+        setShowPendingSuccess(true)
       }, 1500)
     }, 2000)
   }
@@ -284,7 +288,38 @@ export function PaypalModal() {
           : "bg-zinc-950 border border-white/10 text-foreground"
       }`}>
         
-        {selectedMethod === 'paypal' ? (
+        {showPendingSuccess ? (
+          <div className="p-6 md:p-8 flex flex-col justify-between min-h-[400px] text-center space-y-6">
+            <div className="space-y-4 my-auto">
+              <div className="mx-auto size-16 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center border border-emerald-500/20">
+                <CheckCircle2 className="size-8 text-emerald-500 animate-pulse" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="font-heading text-lg font-black tracking-tight text-foreground uppercase">
+                  ¡Solicitud de Pedido Enviada!
+                </h3>
+                <p className="font-mono text-[9.5px] leading-relaxed text-foreground/75 uppercase max-w-sm mx-auto">
+                  Hemos registrado tu solicitud de compra de forma exitosa. El administrador verificará la transferencia y aprobará tu pedido.
+                </p>
+                <div className="bg-zinc-900/50 border border-white/5 rounded-lg p-3 text-left font-mono text-[8.5px] leading-relaxed text-foreground/50 uppercase mt-4">
+                  <span className="font-bold text-foreground block mb-1">💡 ¿Cómo descargar tus beats?</span>
+                  Una vez confirmado tu pago por el administrador, las descargas se habilitarán automáticamente en el botón <span className="text-emerald-400 font-bold">"MIS DESCARGAS"</span> de la barra superior.
+                </div>
+              </div>
+            </div>
+            <div className="pt-6 border-t border-white/5">
+              <button
+                onClick={() => {
+                  setShowPendingSuccess(false)
+                  closeCheckout()
+                }}
+                className="w-full bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-mono text-xs tracking-widest font-bold py-3.5 rounded uppercase transition-colors cursor-pointer"
+              >
+                Entendido / Cerrar
+              </button>
+            </div>
+          </div>
+        ) : selectedMethod === 'paypal' ? (
           <>
             {/* BROWSER ADDRESS BAR */}
             <div className="bg-slate-200 border-b border-slate-300 px-4 py-2.5 flex items-center justify-between text-slate-500 text-xs select-none">
