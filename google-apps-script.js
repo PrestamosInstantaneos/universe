@@ -1310,3 +1310,7 @@ function testSendEmail() {
     Logger.log("Error al enviar email de prueba: " + e.toString());
   }
 }
+
+function authorizeGmail() {
+  MailApp.sendEmail("music.bests.page.is@gmail.com", "Autorización de Notificaciones", "Autorizando envío de emails.");
+}
