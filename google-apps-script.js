@@ -1141,58 +1141,67 @@ function doPost(e) {
         // Enviar email de notificación al administrador
         try {
           var settings = getSettings(ss);
-          var adminEmail = settings.paypalEmail || "music.bests.page.is@gmail.com";
-          var webAppUrl = ScriptApp.getService().getUrl();
+                  var webAppUrl = "";
+          try {
+            webAppUrl = ScriptApp.getService().getUrl() || "";
+          } catch (urlErr) {
+            Logger.log("Error getting URL: " + urlErr.toString());
+          }
+          if (!webAppUrl && settings.webAppUrl) {
+            webAppUrl = settings.webAppUrl;
+          }
           
-          if (webAppUrl) {
-            var approveLink = webAppUrl + "?action=approveOrderFromEmail&id=" + orderId;
-            var rejectLink = webAppUrl + "?action=rejectOrderFromEmail&id=" + orderId;
-            
-            var subject = "🎵 NUEVO PEDIDO PENDIENTE (" + orderId + ") - " + item.title;
-            var htmlBody = `
-              <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #fafafa; padding: 30px; max-width: 600px; border-radius: 10px; margin: 0 auto; border: 1px solid #27272a; text-align: left;">
-                <h2 style="color: #10b981; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; text-align: center; font-size: 18px;">NUEVO PEDIDO PENDIENTE DE APROBACIÓN</h2>
-                
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
-                  <tr style="border-bottom: 1px solid #27272a;">
-                    <td style="padding: 10px 0; color: #a1a1aa; font-weight: bold; font-size: 13px; width: 140px;">ID PEDIDO:</td>
-                    <td style="padding: 10px 0; font-weight: bold; color: #ffffff; font-size: 13px;">${orderId}</td>
-                  </tr>
-                  <tr style="border-bottom: 1px solid #27272a;">
-                    <td style="padding: 10px 0; color: #a1a1aa; font-weight: bold; font-size: 13px;">CLIENTE (EMAIL):</td>
-                    <td style="padding: 10px 0; color: #ffffff; font-size: 13px;">${email}</td>
-                  </tr>
-                  <tr style="border-bottom: 1px solid #27272a;">
-                    <td style="padding: 10px 0; color: #a1a1aa; font-weight: bold; font-size: 13px;">BEAT:</td>
-                    <td style="padding: 10px 0; color: #ffffff; font-weight: bold; font-size: 13px;">${item.title}</td>
-                  </tr>
-                  <tr style="border-bottom: 1px solid #27272a;">
-                    <td style="padding: 10px 0; color: #a1a1aa; font-weight: bold; font-size: 13px;">LICENCIA:</td>
-                    <td style="padding: 10px 0; color: #10b981; font-weight: bold; font-size: 13px; text-transform: uppercase;">${item.licenseType}</td>
-                  </tr>
-                  <tr style="border-bottom: 1px solid #27272a;">
-                    <td style="padding: 10px 0; color: #a1a1aa; font-weight: bold; font-size: 13px;">MONTO:</td>
-                    <td style="padding: 10px 0; color: #ffffff; font-weight: bold; font-size: 13px;">$${Number(item.price).toFixed(2)} USD</td>
-                  </tr>
-                  <tr style="border-bottom: 1px solid #27272a;">
-                    <td style="padding: 10px 0; color: #a1a1aa; font-weight: bold; font-size: 13px;">MÉTODO DE PAGO:</td>
-                    <td style="padding: 10px 0; color: #ffffff; text-transform: uppercase; font-size: 13px;">${paymentMethod}</td>
-                  </tr>
-                </table>
-                
-                <div style="text-align: center; margin-top: 30px;">
+          var approveLink = webAppUrl ? (webAppUrl + "?action=approveOrderFromEmail&id=" + orderId) : "";
+          var rejectLink = webAppUrl ? (webAppUrl + "?action=rejectOrderFromEmail&id=" + orderId) : "";
+          
+          var subject = "🎵 NUEVO PEDIDO PENDIENTE (" + orderId + ") - " + item.title;
+          var htmlBody = `
+            <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #fafafa; padding: 30px; max-width: 600px; border-radius: 10px; margin: 0 auto; border: 1px solid #27272a; text-align: left;">
+              <h2 style="color: #10b981; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; text-align: center; font-size: 18px;">NUEVO PEDIDO PENDIENTE DE APROBACIÓN</h2>
+              
+              <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                <tr style="border-bottom: 1px solid #27272a;">
+                  <td style="padding: 10px 0; color: #a1a1aa; font-weight: bold; font-size: 13px; width: 140px;">ID PEDIDO:</td>
+                  <td style="padding: 10px 0; font-weight: bold; color: #ffffff; font-size: 13px;">${orderId}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #27272a;">
+                  <td style="padding: 10px 0; color: #a1a1aa; font-weight: bold; font-size: 13px;">CLIENTE (EMAIL):</td>
+                  <td style="padding: 10px 0; color: #ffffff; font-size: 13px;">${email}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #27272a;">
+                  <td style="padding: 10px 0; color: #a1a1aa; font-weight: bold; font-size: 13px;">BEAT:</td>
+                  <td style="padding: 10px 0; color: #ffffff; font-weight: bold; font-size: 13px;">${item.title}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #27272a;">
+                  <td style="padding: 10px 0; color: #a1a1aa; font-weight: bold; font-size: 13px;">LICENCIA:</td>
+                  <td style="padding: 10px 0; color: #10b981; font-weight: bold; font-size: 13px; text-transform: uppercase;">${item.licenseType}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #27272a;">
+                  <td style="padding: 10px 0; color: #a1a1aa; font-weight: bold; font-size: 13px;">MONTO:</td>
+                  <td style="padding: 10px 0; color: #ffffff; font-weight: bold; font-size: 13px;">$${Number(item.price).toFixed(2)} USD</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #27272a;">
+                  <td style="padding: 10px 0; color: #a1a1aa; font-weight: bold; font-size: 13px;">MÉTODO DE PAGO:</td>
+                  <td style="padding: 10px 0; color: #ffffff; text-transform: uppercase; font-size: 13px;">${paymentMethod}</td>
+                </tr>
+              </table>
+              
+              <div style="text-align: center; margin-top: 30px;">
+                ${webAppUrl ? `
                   <a href="${approveLink}" style="display: inline-block; background-color: #10b981; color: #ffffff; padding: 12px 30px; font-weight: bold; text-decoration: none; border-radius: 5px; font-size: 13px; text-transform: uppercase; margin-right: 15px; letter-spacing: 0.5px;">APROBAR PEDIDO</a>
                   <a href="${rejectLink}" style="display: inline-block; background-color: #ef4444; color: #ffffff; padding: 12px 30px; font-weight: bold; text-decoration: none; border-radius: 5px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">RECHAZAR PEDIDO</a>
-                </div>
+                ` : `
+                  <p style="color: #a1a1aa; font-size: 11px; font-style: italic; text-align: center; line-height: 1.5;">Accede al Panel de Administración web para aprobar o rechazar esta compra.<br/><span style="font-size: 9px; color: #71717a;">(Nota: Para habilitar los botones en el correo, define "webAppUrl" en tu pestaña de Ajustes de Sheets)</span></p>
+                `}
               </div>
-            `;
-            
-            MailApp.sendEmail({
-              to: adminEmail,
-              subject: subject,
-              htmlBody: htmlBody
-            });
-          }
+            </div>
+          `;
+          
+          MailApp.sendEmail({
+            to: adminEmail,
+            subject: subject,
+            htmlBody: htmlBody
+          });
         } catch (mailErr) {
           Logger.log("Error sending email notification: " + mailErr.toString());
         }
@@ -1313,4 +1322,23 @@ function testSendEmail() {
 
 function authorizeGmail() {
   MailApp.sendEmail("music.bests.page.is@gmail.com", "Autorización de Notificaciones", "Autorizando envío de emails.");
+}
+
+function getSettings(ss) {
+  var settings = { 
+    paypalEmail: "music.bests.page.is@gmail.com",
+    binanceId: "",
+    zinliPhone: "",
+    logoUrl: ""
+  };
+  var settingsSheet = ss.getSheetByName("Ajustes");
+  if (settingsSheet) {
+    var setValues = settingsSheet.getDataRange().getValues();
+    for (var i = 1; i < setValues.length; i++) {
+      var key = String(setValues[i][0]).trim();
+      var val = String(setValues[i][1]).trim();
+      settings[key] = val;
+    }
+  }
+  return settings;
 }
